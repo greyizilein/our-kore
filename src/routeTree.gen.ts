@@ -40,6 +40,8 @@ import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticate
 import { Route as CollectionSlugIndexRouteImport } from './routes/collection.$slug.index'
 import { Route as CollectionSlugVariantRouteImport } from './routes/collection.$slug.$variant'
 import { Route as ApiPublicPaystackWebhookRouteImport } from './routes/api/public/paystack-webhook'
+import { Route as SubscribeRouteImport } from './routes/subscribe'
+import { Route as SubscribeReturnRouteImport } from './routes/subscribe.return'
 
 const SystemRoute = SystemRouteImport.update({
   id: '/system',
@@ -196,9 +198,21 @@ const ApiPublicPaystackWebhookRoute =
     path: '/api/public/paystack-webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
+const SubscribeRoute = SubscribeRouteImport.update({
+  id: '/subscribe',
+  path: '/subscribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SubscribeReturnRoute = SubscribeReturnRouteImport.update({
+  id: '/return',
+  path: '/return',
+  getParentRoute: () => SubscribeRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/subscribe': typeof SubscribeRouteWithChildren
+  '/subscribe/return': typeof SubscribeReturnRoute
   '/atelier': typeof AtelierRoute
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRouteWithChildren
@@ -231,6 +245,8 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/subscribe': typeof SubscribeRouteWithChildren
+  '/subscribe/return': typeof SubscribeReturnRoute
   '/atelier': typeof AtelierRoute
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRouteWithChildren
@@ -262,6 +278,8 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/subscribe': typeof SubscribeRouteWithChildren
+  '/subscribe/return': typeof SubscribeReturnRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/atelier': typeof AtelierRoute
   '/cart': typeof CartRoute
@@ -297,6 +315,8 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/subscribe'
+    | '/subscribe/return'
     | '/atelier'
     | '/cart'
     | '/checkout'
@@ -329,6 +349,8 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/subscribe'
+    | '/subscribe/return'
     | '/atelier'
     | '/cart'
     | '/checkout'
@@ -358,6 +380,8 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/subscribe'
+    | '/subscribe/return'
     | '/_authenticated'
     | '/atelier'
     | '/cart'
@@ -392,6 +416,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  SubscribeRoute: typeof SubscribeRouteWithChildren
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   AtelierRoute: typeof AtelierRoute
   CartRoute: typeof CartRoute
@@ -633,6 +658,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPaystackWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/subscribe': {
+      id: '/subscribe'
+      path: '/subscribe'
+      fullPath: '/subscribe'
+      preLoaderRoute: typeof SubscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/subscribe/return': {
+      id: '/subscribe/return'
+      path: '/return'
+      fullPath: '/subscribe/return'
+      preLoaderRoute: typeof SubscribeReturnRouteImport
+      parentRoute: typeof SubscribeRoute
+    }
   }
 }
 
@@ -651,6 +690,14 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
   AuthenticatedRouteChildren,
 )
+
+interface SubscribeRouteChildren {
+  SubscribeReturnRoute: typeof SubscribeReturnRoute
+}
+const SubscribeRouteChildren: SubscribeRouteChildren = {
+  SubscribeReturnRoute: SubscribeReturnRoute,
+}
+const SubscribeRouteWithChildren = SubscribeRoute._addFileChildren(SubscribeRouteChildren)
 
 interface CheckoutRouteChildren {
   CheckoutReturnRoute: typeof CheckoutReturnRoute
@@ -707,6 +754,7 @@ const JournalRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  SubscribeRoute: SubscribeRouteWithChildren,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   AtelierRoute: AtelierRoute,
   CartRoute: CartRoute,
