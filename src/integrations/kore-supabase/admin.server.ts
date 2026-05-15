@@ -2,7 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 
 // Server-only admin client. Bypasses RLS. Never import from client code.
 // Uses a Proxy so module load never throws even when env vars are missing.
-const url = process.env.KORE_SUPABASE_URL ?? "";
+const url = process.env.KORE_SUPABASE_URL || "https://zrjljdybvzvjofgldwyc.supabase.co";
 const serviceRoleKey = process.env.KORE_SUPABASE_SERVICE_ROLE_KEY ?? "";
 
 let _client: ReturnType<typeof createClient> | null = null;
