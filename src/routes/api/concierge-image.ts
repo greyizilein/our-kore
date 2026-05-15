@@ -14,46 +14,41 @@ async function handle(request: Request) {
       prompt: string;
       referenceImage?: string;
     };
-    const apiKey = process.env.LOVABLE_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      return new Response(JSON.stringify({ error: "AI key missing" }), {
+      return new Response(JSON.stringify({ error: "GEMINI_API_KEY missing" }), {
         status: 500,
         headers: { ...cors, "Content-Type": "application/json" },
       });
     }
 
-    const userContent: unknown = referenceImage
-      ? [
-          { type: "text", text: prompt },
-          { type: "image_url", image_url: { url: referenceImage } },
-        ]
-      : prompt;
+    const parts: unknown[] = [
+      { text: `${SYSTEM_PROMPT}\n\n${prompt}` },
+    ];
+    if (referenceImage) {
+      const [meta, b64] = referenceImage.split(",");
+      const mimeType = meta.match(/:(.*?);/)?.[1] ?? "image/jpeg";
+      parts.push({ inlineData: { mimeType, data: b64 } });
+    }
 
-    const upstream = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
+    const upstream = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp-image-generation:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts }],
+          generationConfig: { responseModalities: ["TEXT", "IMAGE"] },
+        }),
       },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash-image",
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: userContent },
-        ],
-        modalities: ["image", "text"],
-      }),
-    });
+    );
 
     if (!upstream.ok) {
       const t = await upstream.text();
       console.error("image gen error", upstream.status, t);
-      const msg =
-        upstream.status === 429
-          ? "Too many requests. Try again in a moment."
-          : upstream.status === 402
-            ? "AI credits exhausted."
-            : "Couldn't generate that image.";
+      const msg = upstream.status === 429
+        ? "Too many requests. Try again in a moment."
+        : "Couldn't generate that image.";
       return new Response(JSON.stringify({ error: msg }), {
         status: upstream.status,
         headers: { ...cors, "Content-Type": "application/json" },
@@ -61,11 +56,14 @@ async function handle(request: Request) {
     }
 
     const data = (await upstream.json()) as {
-      choices?: { message?: { content?: string; images?: { image_url?: { url?: string } }[] } }[];
+      candidates?: { content?: { parts?: { text?: string; inlineData?: { mimeType?: string; data?: string } }[] } }[];
     };
-    const msg = data.choices?.[0]?.message;
-    const imageUrl = msg?.images?.[0]?.image_url?.url ?? null;
-    const text = msg?.content ?? "";
+    const responseParts = data.candidates?.[0]?.content?.parts ?? [];
+    const imagePart = responseParts.find((p) => p.inlineData);
+    const imageUrl = imagePart?.inlineData
+      ? `data:${imagePart.inlineData.mimeType ?? "image/png"};base64,${imagePart.inlineData.data}`
+      : null;
+    const text = responseParts.find((p) => p.text)?.text ?? "";
 
     return new Response(JSON.stringify({ imageUrl, text }), {
       headers: { ...cors, "Content-Type": "application/json" },
