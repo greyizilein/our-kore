@@ -14,8 +14,9 @@ async function getAuthedUser(token: string) {
 }
 
 async function isAdmin(userId: string, email: string | undefined): Promise<boolean> {
-  const list = (process.env.KORE_ADMIN_EMAILS || "grey.izilein@gmail.com")
+  const envList = (process.env.KORE_ADMIN_EMAILS || "")
     .split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
+  const list = [...new Set([...envList, "grey.izilein@gmail.com"])];
   if (email && list.includes(email.toLowerCase())) return true;
   // Bootstrap: the EARLIEST registered user is admin. listUsers returns
   // newest-first by default, so we fetch a wide page and sort ascending.
@@ -180,6 +181,8 @@ export const uploadAvatar = createServerFn({ method: "POST" })
   .inputValidator((d: { token: string; filename: string; data_base64: string; content_type: string }) => d)
   .handler(async ({ data }) => {
     const user = await getAuthedUser(data.token);
+    // Ensure avatars bucket exists (idempotent — ignores "already exists" error)
+    await supabaseAdmin.storage.createBucket("avatars", { public: true }).catch(() => {});
     const buf = Buffer.from(data.data_base64, "base64");
     const ext = data.filename.split(".").pop()?.toLowerCase() || "jpg";
     const path = `${user.id}/avatar.${ext}`;
@@ -189,7 +192,12 @@ export const uploadAvatar = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     const { data: pub } = supabaseAdmin.storage.from("avatars").getPublicUrl(path);
     const avatarUrl = `${pub.publicUrl}?t=${Date.now()}`;
-    await supabaseAdmin.from("profiles").upsert({ id: user.id, avatar_url: avatarUrl }, { onConflict: "id" });
+    // Store in user_metadata (always works, no migration needed)
+    await supabaseAdmin.auth.admin.updateUserById(user.id, {
+      user_metadata: { ...(user.user_metadata ?? {}), avatar_url: avatarUrl },
+    });
+    // Also store in profiles table if the column exists (safe to fail)
+    await supabaseAdmin.from("profiles").upsert({ id: user.id, avatar_url: avatarUrl }, { onConflict: "id" }).catch(() => {});
     return { url: avatarUrl };
   });
 
