@@ -3,6 +3,7 @@ import { LazyVideo } from "@/components/chrome/lazy-video";
 import { useEffect, useRef, useState } from "react";
 import { SiteShell } from "@/components/chrome/site-shell";
 import { cn } from "@/lib/utils";
+import { usePageText } from "@/lib/cms/page-content";
 
 export const Route = createFileRoute("/system")({
   component: SystemPage,
@@ -37,6 +38,8 @@ const PRINCIPLES = [
 ];
 
 function SystemPage() {
+  const heroEyebrow = usePageText("system", "hero.eyebrow", "The System — Forme · Collection I");
+  const heroSubtitle = usePageText("system", "hero.subtitle", "A modular wardrobe architecture. Each piece resolves into the next. Built for longevity, not trends.");
   const [open, setOpen] = useState(0);
   const reveals = useRef<HTMLDivElement[]>([]);
 
@@ -60,9 +63,9 @@ function SystemPage() {
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
         <div className="absolute right-6 md:right-12 top-1/2 -translate-y-1/2 [writing-mode:vertical-lr] text-[10px] tracking-[0.3em] uppercase text-muted-foreground">Scroll ↓</div>
         <div className="relative">
-          <p className="text-[11px] tracking-[0.4em] uppercase text-accent mb-6">— The System</p>
+          <p className="text-[11px] tracking-[0.4em] uppercase text-accent mb-6">— {heroEyebrow}</p>
           <h1 className="font-display text-[clamp(3rem,7vw,7rem)] font-light leading-[0.9] mb-5">Our<br /><em className="text-muted-foreground">Kore</em></h1>
-          <p className="text-sm text-muted-foreground max-w-md leading-relaxed">A modular wardrobe architecture. Each piece resolves into the next. Built for longevity, not trends.</p>
+          <p className="text-sm text-muted-foreground max-w-md leading-relaxed">{heroSubtitle}</p>
         </div>
       </section>
 
