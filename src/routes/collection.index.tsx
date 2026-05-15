@@ -7,6 +7,7 @@ import { DEFAULT_COLLECTIONS, mergeCollections, type CollectionSet } from "@/lib
 import { getSiteContent } from "@/lib/cms.functions";
 import { SubscriptionSection } from "@/components/marketing/subscription-section";
 import { FadeUp, Stagger, StaggerChild } from "@/lib/animation";
+import { usePageText } from "@/lib/cms/page-content";
 
 export const Route = createFileRoute("/collection/")({
   component: GalleryPage,
@@ -21,6 +22,9 @@ export const Route = createFileRoute("/collection/")({
 });
 
 function GalleryPage() {
+  const cEyebrow  = usePageText("collection", "hero.eyebrow",  "The House — Collections");
+  const cTitle    = usePageText("collection", "hero.title",    "A gallery of chapters, not seasons.");
+  const cSubtitle = usePageText("collection", "hero.subtitle", "Each collection is a small, finished set. Walk through them as you would a room of works.");
   const fetchContent = useServerFn(getSiteContent);
   const [collections, setCollections] = useState<CollectionSet[]>(DEFAULT_COLLECTIONS);
 
@@ -37,12 +41,12 @@ function GalleryPage() {
     <SiteShell>
       <section className="pt-24 sm:pt-28 pb-8 sm:pb-12 px-3 sm:px-6 lg:px-10 max-w-[1600px] mx-auto">
         <FadeUp className="border-b border-border/40 pb-8 sm:pb-12">
-          <p className="text-[10px] sm:text-xs tracking-[0.3em] uppercase text-accent mb-3 sm:mb-4">The House — Collections</p>
+          <p className="text-[10px] sm:text-xs tracking-[0.3em] uppercase text-accent mb-3 sm:mb-4">{cEyebrow}</p>
           <h1 className="font-display text-4xl sm:text-6xl md:text-7xl font-light leading-[0.9] max-w-3xl">
-            A gallery of <em className="italic">chapters</em>, not seasons.
+            <em className="italic">{cTitle}</em>
           </h1>
           <p className="mt-4 sm:mt-6 max-w-xl text-sm text-muted-foreground leading-relaxed">
-            Each collection is a small, finished set. Walk through them as you would a room of works.
+            {cSubtitle}
           </p>
         </FadeUp>
       </section>
