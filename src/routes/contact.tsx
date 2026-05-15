@@ -3,6 +3,7 @@ import { useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { SiteShell } from "@/components/chrome/site-shell";
 import { submitContact } from "@/lib/admin.functions";
+import { usePageText } from "@/lib/cms/page-content";
 
 export const Route = createFileRoute("/contact")({
   component: Page,
@@ -52,17 +53,21 @@ function Page() {
     }
   };
 
+  const eyebrow  = usePageText("contact", "eyebrow",  "In conversation");
+  const title    = usePageText("contact", "title",    "Write to us.");
+  const response = usePageText("contact", "response", "We answer within a day.");
+
   return (
     <SiteShell>
       <section className="pt-28 px-6 lg:px-10 max-w-[1300px] mx-auto pb-32">
         <div className="grid lg:grid-cols-[1fr_1fr] gap-16 lg:gap-24 border-b border-border/40 pb-16 mb-20">
           <div>
-            <p className="text-xs tracking-[0.25em] uppercase text-accent mb-3">In conversation</p>
+            <p className="text-xs tracking-[0.25em] uppercase text-accent mb-3">{eyebrow}</p>
             <h1 className="font-display text-5xl md:text-7xl font-light leading-[0.92]">
-              Write to <em className="italic">us</em>.
+              <em className="italic">{title}</em>
             </h1>
             <p className="mt-8 text-lg text-muted-foreground leading-relaxed max-w-md">
-              We answer every message inside a working day. No bots, no tickets — a person at the atelier.
+              {response} No bots, no tickets — a person at the atelier.
             </p>
           </div>
 
