@@ -1,52 +1,34 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
 import { SiteShell } from "@/components/chrome/site-shell";
 import { LazyVideo } from "@/components/chrome/lazy-video";
 import { FadeUp, Stagger, StaggerChild } from "@/lib/animation";
 import { usePageText } from "@/lib/cms/page-content";
 
-const QUOTES = [
-  "Built for the body that moves with purpose.",
-  "A wardrobe that thinks with you.",
-  "Fewer pieces. More wear. Longer story.",
-  "Cut once. Worn for a decade.",
-  "Worth is derived from fit, material intelligence, construction, functional utility, and the KORE experience of ownership. Each KORE member owns an exclusive work of art that no one else walking the gallery of this world will ever own.",
-];
-
-function TypingQuote() {
-  const [idx, setIdx] = useState(0);
-  const [text, setText] = useState("");
-  const [phase, setPhase] = useState<"typing" | "hold" | "deleting">("typing");
-
-  useEffect(() => {
-    const full = QUOTES[idx];
-    let t: ReturnType<typeof setTimeout>;
-    if (phase === "typing") {
-      if (text.length < full.length) {
-        t = setTimeout(() => setText(full.slice(0, text.length + 1)), 55);
-      } else {
-        t = setTimeout(() => setPhase("hold"), 1800);
-      }
-    } else if (phase === "hold") {
-      t = setTimeout(() => setPhase("deleting"), 1200);
-    } else {
-      if (text.length > 0) {
-        t = setTimeout(() => setText(full.slice(0, text.length - 1)), 25);
-      } else {
-        setIdx((i) => (i + 1) % QUOTES.length);
-        setPhase("typing");
-      }
-    }
-    return () => clearTimeout(t);
-  }, [text, phase, idx]);
-
-  return (
-    <p className="font-display italic text-3xl md:text-5xl text-center px-6 max-w-3xl min-h-[1.5em]">
-      "{text}<span className="inline-block w-[2px] h-[0.9em] ml-1 bg-accent align-middle animate-pulse" />"
-    </p>
-  );
-}
+const SUBSCRIPTION_TIERS = [
+  {
+    slug: "access",
+    name: "Access",
+    price: "₦15,000",
+    period: "/ month",
+    perks: ["Full collection access", "Member pricing", "KORE concierge", "Standard shipping"],
+  },
+  {
+    slug: "circle",
+    name: "The Circle",
+    price: "₦35,000",
+    period: "/ month",
+    perks: ["Hold pieces for 7 days", "Free tailoring for life", "Early drops & exclusives", "Lifetime garment repair"],
+    featured: true,
+  },
+  {
+    slug: "atelier",
+    name: "Atelier",
+    price: "₦75,000",
+    period: "/ month",
+    perks: ["Everything in The Circle", "Unlimited atelier visits", "Custom commission priority", "Personal atelier liaison"],
+  },
+] as const;
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -59,27 +41,27 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
-  const t = (id: string, def: string) => usePageText("home", id, def);
-  const eyebrow = t("hero.eyebrow", "SS / 26 — The Forme");
-  const heroL1 = t("hero.title.1", "Intelligent");
-  const heroL2 = t("hero.title.2", "casualwear.");
-  const subhead = t("hero.subhead", "A small, considered wardrobe — engineered for the people who already know what they want, and for the ones learning to.");
-  const ctaPrimary = t("hero.cta.primary", "Enter the collection");
-  const ctaSecondary = t("hero.cta.secondary", "Speak to KORE");
+  const eyebrow    = usePageText("home", "hero.eyebrow",        "SS / 26 — The Forme");
+  const heroL1     = usePageText("home", "hero.title.1",        "Intelligent");
+  const heroL2     = usePageText("home", "hero.title.2",        "casualwear.");
+  const subhead    = usePageText("home", "hero.subhead",        "A small, considered wardrobe — engineered for the people who already know what they want, and for the ones learning to.");
+  const ctaPrimary = usePageText("home", "hero.cta.primary",    "Enter the collection");
+  const ctaSecondary = usePageText("home", "hero.cta.secondary","Speak to KORE");
   const pillars = [
-    { n: "01", t: t("pillar.1.title", "Considered"),  d: t("pillar.1.body", "Every garment carries intent. Nothing exists to fill a slot — each piece earns its place.") },
-    { n: "02", t: t("pillar.2.title", "Engineered"),  d: t("pillar.2.body", "Cut, fabric and finish are tested for years of wear. Form is the residue of function.") },
-    { n: "03", t: t("pillar.3.title", "Intelligent"), d: t("pillar.3.body", "Your wardrobe learns. Members access KORE — an agent that recommends, holds and tailors.") },
+    { n: "01", t: usePageText("home", "pillar.1.title", "Considered"),  d: usePageText("home", "pillar.1.body", "Every garment carries intent. Nothing exists to fill a slot — each piece earns its place.") },
+    { n: "02", t: usePageText("home", "pillar.2.title", "Engineered"),  d: usePageText("home", "pillar.2.body", "Cut, fabric and finish are tested for years of wear. Form is the residue of function.") },
+    { n: "03", t: usePageText("home", "pillar.3.title", "Intelligent"), d: usePageText("home", "pillar.3.body", "Your wardrobe learns. Members access KORE — an agent that recommends, holds and tailors.") },
   ];
-  const memEyebrow = t("membership.eyebrow", "Membership");
-  const memTitle   = t("membership.title", "For the wardrobe you'll keep ten years.");
-  const memBody    = t("membership.body", "Members access first drops, complimentary alterations, and a personal agent — KORE — that holds your sizes, your preferences and your taste.");
-  const memCta     = t("membership.cta", "Become a member");
+  const founderQuote = usePageText("home", "founder.quote", "Worth is derived from fit, material intelligence, construction, functional utility, and the KORE experience of ownership. Each KORE member owns an exclusive work of art that no one else walking the gallery of this world will ever own. And that is the true meaning of luxury.");
+  const memEyebrow = usePageText("home", "membership.eyebrow", "Membership");
+  const memTitle   = usePageText("home", "membership.title",   "For the wardrobe you'll keep ten years.");
+  const memBody    = usePageText("home", "membership.body",    "Members access first drops, complimentary alterations, and a personal agent — KORE — that holds your sizes, your preferences and your taste.");
+  const memCta     = usePageText("home", "membership.cta",     "Become a member");
+
   return (
     <SiteShell padTop={false}>
       {/* HERO */}
       <section className="relative min-h-[100svh] grid place-items-center overflow-hidden">
-        {/* Background video — lazy mounted */}
         <LazyVideo src="/v-theme/hero.mp4" className="absolute inset-0 h-full w-full opacity-50" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_30%,color-mix(in_oklab,var(--accent)_22%,transparent),transparent_60%)]" />
         <div className="absolute inset-0 bg-[linear-gradient(180deg,transparent,var(--background)_85%)]" />
@@ -197,17 +179,64 @@ function Index() {
         </Stagger>
       </section>
 
-      {/* TYPING QUOTE BAND — full-bleed video */}
-      <section className="relative w-full h-[100svh] overflow-hidden">
-        <LazyVideo src="/media/wardrobe.mp4" className="absolute inset-0 h-full w-full" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,color-mix(in_oklab,var(--background)_35%,transparent)_60%,var(--background)_100%)]" />
-        <div className="absolute inset-0 grid place-items-center">
-          <TypingQuote />
-        </div>
+      {/* MEMBERSHIP TIERS */}
+      <section className="mx-auto max-w-[1600px] px-6 lg:px-10 py-24 border-t border-border/40">
+        <FadeUp className="mb-16 flex justify-between items-end">
+          <div>
+            <div className="eyebrow text-accent mb-3">Membership</div>
+            <h2 className="font-display text-5xl lg:text-6xl font-light">Choose your <em>circle</em>.</h2>
+          </div>
+          <Link to="/membership" className="eyebrow text-muted-foreground hover:text-foreground">
+            Compare all →
+          </Link>
+        </FadeUp>
+
+        <Stagger className="grid md:grid-cols-3 gap-px bg-border/30">
+          {SUBSCRIPTION_TIERS.map((tier) => (
+            <StaggerChild key={tier.slug}>
+              <div className={`p-10 flex flex-col h-full ${(tier as any).featured ? "bg-foreground text-background" : "bg-background"}`}>
+                <p className={`text-[10px] uppercase tracking-[0.3em] mb-4 ${(tier as any).featured ? "text-background/50" : "text-accent"}`}>{tier.name}</p>
+                <div className="mb-1">
+                  <span className="font-display text-4xl font-light">{tier.price}</span>
+                  <span className={`text-xs ml-2 ${(tier as any).featured ? "text-background/50" : "text-muted-foreground"}`}>{tier.period}</span>
+                </div>
+                <ul className="mt-8 space-y-3 mb-10 flex-1">
+                  {tier.perks.map((p) => (
+                    <li key={p} className={`flex gap-3 text-sm ${(tier as any).featured ? "text-background/80" : "text-muted-foreground"}`}>
+                      <span className={(tier as any).featured ? "text-background/40" : "text-accent"}>—</span>
+                      {p}
+                    </li>
+                  ))}
+                </ul>
+                <Link
+                  to="/subscribe"
+                  search={{ tier: tier.slug }}
+                  className={`mt-auto text-center py-4 text-[11px] uppercase tracking-[0.2em] transition-colors ${
+                    (tier as any).featured
+                      ? "bg-background text-foreground hover:bg-accent hover:text-accent-foreground"
+                      : "border border-border hover:border-foreground"
+                  }`}
+                >
+                  Join {tier.name} →
+                </Link>
+              </div>
+            </StaggerChild>
+          ))}
+        </Stagger>
       </section>
 
+      {/* FOUNDER QUOTE */}
+      <FadeUp className="py-28 px-6 lg:px-10 border-t border-border/40">
+        <div className="max-w-4xl mx-auto text-center">
+          <p className="font-display italic text-2xl md:text-4xl lg:text-5xl font-light leading-[1.3] text-foreground/90">
+            "{founderQuote}"
+          </p>
+          <p className="mt-8 text-[11px] uppercase tracking-[0.3em] text-accent">— Founder, KORE</p>
+        </div>
+      </FadeUp>
+
       {/* MEMBERSHIP CTA */}
-      <FadeUp className="mx-auto max-w-[1600px] px-6 lg:px-10 py-32">
+      <FadeUp className="mx-auto max-w-[1600px] px-6 lg:px-10 py-24">
         <div className="border border-border p-12 lg:p-20 bg-[linear-gradient(135deg,color-mix(in_oklab,var(--accent)_8%,transparent),transparent)] transition-shadow duration-700 hover:shadow-[0_0_60px_-10px_color-mix(in_oklab,var(--accent)_20%,transparent)]">
           <div className="eyebrow text-accent">{memEyebrow}</div>
           <h2 className="mt-6 text-5xl lg:text-7xl font-display max-w-3xl whitespace-pre-line">
@@ -218,7 +247,7 @@ function Index() {
           </p>
           <Link
             to="/membership"
-            className="mt-10 inline-block px-8 py-4 bg-accent text-accent-foreground text-xs uppercase tracking-[0.22em] hover:opacity-90 transition-opacity active:scale-[0.98] transition-transform"
+            className="mt-10 inline-block px-8 py-4 bg-accent text-accent-foreground text-xs uppercase tracking-[0.22em] hover:opacity-90 transition-opacity active:scale-[0.98]"
           >
             {memCta}
           </Link>
