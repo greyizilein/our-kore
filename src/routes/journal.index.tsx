@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { SiteShell } from "@/components/chrome/site-shell";
 import { PageHero } from "@/components/chrome/page-hero";
 import { listJournalPosts, type JournalPost } from "@/lib/journal.functions";
+import { usePageText } from "@/lib/cms/page-content";
 
 export const Route = createFileRoute("/journal/")({
   component: Page,
@@ -26,11 +27,14 @@ function Page() {
   const feature = posts?.[0];
   const rest = posts?.slice(1) ?? [];
 
+  const jEyebrow = usePageText("journal", "hero.eyebrow", "The Journal");
+  const jTitle   = usePageText("journal", "hero.title",   "Notes from the atelier.");
+
   return (
     <SiteShell padTop={false}>
       <PageHero
-        eyebrow="The Journal"
-        title={<>Notes from <em className="italic">the atelier</em>.</>}
+        eyebrow={jEyebrow}
+        title={<em className="italic">{jTitle}</em>}
         media="/media/walk.mp4"
         align="left"
       />
