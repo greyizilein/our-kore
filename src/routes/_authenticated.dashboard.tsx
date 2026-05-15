@@ -125,16 +125,24 @@ function Dashboard() {
     const token = session?.access_token;
     if (!token) return;
     const buf = await file.arrayBuffer();
-    const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+    const bytes = new Uint8Array(buf);
+    let binary = "";
+    const CHUNK = 8192;
+    for (let i = 0; i < bytes.length; i += CHUNK) {
+      binary += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
+    }
+    const b64 = btoa(binary);
     try {
       const res = await doUploadAvatar({ data: { token, filename: file.name, data_base64: b64, content_type: file.type } });
       setProfile((p) => ({ ...(p ?? { id: user!.id, full_name: null, phone: null }), avatar_url: res.url }));
+      await supabase.auth.refreshSession();
       flash("Avatar updated");
     } catch (e: any) {
       flash(e.message ?? "Upload failed");
     }
   };
 
+  const avatarUrl = profile?.avatar_url || (user?.user_metadata?.avatar_url as string | undefined);
   const name = profile?.full_name?.split(" ")[0] || user?.email?.split("@")[0] || "Member";
   const initial = (name[0] || "K").toUpperCase();
 
@@ -149,8 +157,8 @@ function Dashboard() {
           </div>
           <div className="px-7 py-5 border-b border-border flex items-center gap-3">
             <div className="h-10 w-10 rounded-full bg-accent text-accent-foreground grid place-items-center font-display overflow-hidden flex-shrink-0">
-              {profile?.avatar_url
-                ? <img src={profile.avatar_url} alt={name} className="h-full w-full object-cover" />
+              {avatarUrl
+                ? <img src={avatarUrl} alt={name} className="h-full w-full object-cover" />
                 : initial}
             </div>
             <div className="min-w-0 flex-1">
@@ -204,8 +212,8 @@ function Dashboard() {
           {/* Mobile header — avatar + admin badge */}
           <div className="md:hidden flex items-center gap-3 px-4 py-3 border-b border-border">
             <div className="h-9 w-9 rounded-full bg-accent text-accent-foreground grid place-items-center font-display text-sm overflow-hidden flex-shrink-0">
-              {profile?.avatar_url
-                ? <img src={profile.avatar_url} alt={name} className="h-full w-full object-cover" />
+              {avatarUrl
+                ? <img src={avatarUrl} alt={name} className="h-full w-full object-cover" />
                 : initial}
             </div>
             <div className="min-w-0 flex-1">
@@ -363,7 +371,7 @@ function Dashboard() {
             )}
 
             {panel === "account" && (
-              <AccountPanel profile={profile} email={user?.email} onSave={update} onSignOut={onSignOut} onAvatarUpload={handleAvatarUpload} />
+              <AccountPanel profile={profile} email={user?.email} avatarUrl={avatarUrl} onSave={update} onSignOut={onSignOut} onAvatarUpload={handleAvatarUpload} />
             )}
           </div>
         </main>
@@ -890,9 +898,10 @@ function ThemeRow({ label, on, onToggle }: { label: string; on: boolean; onToggl
   );
 }
 
-function AccountPanel({ profile, email, onSave, onSignOut, onAvatarUpload }: {
+function AccountPanel({ profile, email, avatarUrl, onSave, onSignOut, onAvatarUpload }: {
   profile: Profile | null;
   email?: string;
+  avatarUrl?: string;
   onSave: (p: Partial<Profile>) => void;
   onSignOut: () => void;
   onAvatarUpload: (file: File) => void;
@@ -924,8 +933,8 @@ function AccountPanel({ profile, email, onSave, onSignOut, onAvatarUpload }: {
         <div className="flex items-center gap-4">
           <label className="relative cursor-pointer group">
             <div className="h-16 w-16 rounded-full bg-accent text-accent-foreground grid place-items-center font-display text-xl overflow-hidden">
-              {profile?.avatar_url
-                ? <img src={profile.avatar_url} alt={name} className="h-full w-full object-cover" />
+              {avatarUrl
+                ? <img src={avatarUrl} alt={name} className="h-full w-full object-cover" />
                 : initial}
             </div>
             <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[9px] tracking-widest uppercase">
