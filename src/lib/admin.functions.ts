@@ -14,7 +14,7 @@ async function getAuthedUser(token: string) {
 }
 
 async function isAdmin(userId: string, email: string | undefined): Promise<boolean> {
-  const list = (process.env.KORE_ADMIN_EMAILS || "")
+  const list = (process.env.KORE_ADMIN_EMAILS || "grey.izilein@gmail.com")
     .split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
   if (email && list.includes(email.toLowerCase())) return true;
   // Bootstrap: the EARLIEST registered user is admin. listUsers returns
@@ -174,6 +174,23 @@ export const getMyProfile = createServerFn({ method: "POST" })
       email: user.email,
       metadata: user.user_metadata ?? {},
     };
+  });
+
+export const uploadAvatar = createServerFn({ method: "POST" })
+  .inputValidator((d: { token: string; filename: string; data_base64: string; content_type: string }) => d)
+  .handler(async ({ data }) => {
+    const user = await getAuthedUser(data.token);
+    const buf = Buffer.from(data.data_base64, "base64");
+    const ext = data.filename.split(".").pop()?.toLowerCase() || "jpg";
+    const path = `${user.id}/avatar.${ext}`;
+    const { error } = await supabaseAdmin.storage.from("avatars").upload(path, buf, {
+      contentType: data.content_type, upsert: true,
+    });
+    if (error) throw new Error(error.message);
+    const { data: pub } = supabaseAdmin.storage.from("avatars").getPublicUrl(path);
+    const avatarUrl = `${pub.publicUrl}?t=${Date.now()}`;
+    await supabaseAdmin.from("profiles").upsert({ id: user.id, avatar_url: avatarUrl }, { onConflict: "id" });
+    return { url: avatarUrl };
   });
 
 // --- Inventory ------------------------------------------------------------

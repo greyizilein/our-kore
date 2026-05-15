@@ -5,7 +5,7 @@ import { SiteShell } from "@/components/chrome/site-shell";
 import { useAuth } from "@/lib/auth/auth-context";
 import { useTheme, THEMES, type ThemeName, type Typeface } from "@/lib/theme/theme-context";
 import { supabase } from "@/integrations/kore-supabase/client";
-import { verifyMemberCode, adminWhoAmI } from "@/lib/admin.functions";
+import { verifyMemberCode, adminWhoAmI, uploadAvatar } from "@/lib/admin.functions";
 import { getActiveAnnouncements, markAllAnnouncementsRead } from "@/lib/cms.functions";
 import { cn } from "@/lib/utils";
 import { useSaved, saved, enrichSaved } from "@/lib/saved-store";
@@ -36,6 +36,7 @@ interface Profile {
   id: string;
   full_name: string | null;
   phone: string | null;
+  avatar_url?: string | null;
   fit_size?: string | null;
   fit_chest?: number | null;
   fit_waist?: number | null;
@@ -66,6 +67,7 @@ function Dashboard() {
   const whoAmI = useServerFn(adminWhoAmI);
   const fetchNotices = useServerFn(getActiveAnnouncements);
   const markRead = useServerFn(markAllAnnouncementsRead);
+  const doUploadAvatar = useServerFn(uploadAvatar);
 
   useEffect(() => {
     if (!user) return;
@@ -119,6 +121,20 @@ function Dashboard() {
     setTimeout(advancePanel, 700);
   };
 
+  const handleAvatarUpload = async (file: File) => {
+    const token = session?.access_token;
+    if (!token) return;
+    const buf = await file.arrayBuffer();
+    const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+    try {
+      const res = await doUploadAvatar({ data: { token, filename: file.name, data_base64: b64, content_type: file.type } });
+      setProfile((p) => ({ ...(p ?? { id: user!.id, full_name: null, phone: null }), avatar_url: res.url }));
+      flash("Avatar updated");
+    } catch (e: any) {
+      flash(e.message ?? "Upload failed");
+    }
+  };
+
   const name = profile?.full_name?.split(" ")[0] || user?.email?.split("@")[0] || "Member";
   const initial = (name[0] || "K").toUpperCase();
 
@@ -132,8 +148,10 @@ function Dashboard() {
             <div className="text-[10px] tracking-[0.2em] uppercase text-accent mt-1">My Space</div>
           </div>
           <div className="px-7 py-5 border-b border-border flex items-center gap-3">
-            <div className="h-10 w-10 rounded-full bg-accent text-accent-foreground grid place-items-center font-display">
-              {initial}
+            <div className="h-10 w-10 rounded-full bg-accent text-accent-foreground grid place-items-center font-display overflow-hidden flex-shrink-0">
+              {profile?.avatar_url
+                ? <img src={profile.avatar_url} alt={name} className="h-full w-full object-cover" />
+                : initial}
             </div>
             <div className="min-w-0 flex-1">
               <div className="text-sm truncate">{profile?.full_name || name}</div>
@@ -185,7 +203,11 @@ function Dashboard() {
         <main className="flex flex-col min-w-0 overflow-x-hidden">
           {/* Mobile header — avatar + admin badge */}
           <div className="md:hidden flex items-center gap-3 px-4 py-3 border-b border-border">
-            <div className="h-9 w-9 rounded-full bg-accent text-accent-foreground grid place-items-center font-display text-sm">{initial}</div>
+            <div className="h-9 w-9 rounded-full bg-accent text-accent-foreground grid place-items-center font-display text-sm overflow-hidden flex-shrink-0">
+              {profile?.avatar_url
+                ? <img src={profile.avatar_url} alt={name} className="h-full w-full object-cover" />
+                : initial}
+            </div>
             <div className="min-w-0 flex-1">
               <div className="text-sm truncate">{profile?.full_name || name}</div>
               <div className="text-[10px] tracking-[0.18em] uppercase text-accent">Member</div>
@@ -341,7 +363,7 @@ function Dashboard() {
             )}
 
             {panel === "account" && (
-              <AccountPanel profile={profile} email={user?.email} onSave={update} onSignOut={onSignOut} />
+              <AccountPanel profile={profile} email={user?.email} onSave={update} onSignOut={onSignOut} onAvatarUpload={handleAvatarUpload} />
             )}
           </div>
         </main>
@@ -868,11 +890,16 @@ function ThemeRow({ label, on, onToggle }: { label: string; on: boolean; onToggl
   );
 }
 
-function AccountPanel({ profile, email, onSave, onSignOut }: {
-  profile: Profile | null; email?: string; onSave: (p: Partial<Profile>) => void; onSignOut: () => void;
+function AccountPanel({ profile, email, onSave, onSignOut, onAvatarUpload }: {
+  profile: Profile | null;
+  email?: string;
+  onSave: (p: Partial<Profile>) => void;
+  onSignOut: () => void;
+  onAvatarUpload: (file: File) => void;
 }) {
   const [fullName, setFullName] = useState(profile?.full_name ?? "");
   const [phone, setPhone] = useState(profile?.phone ?? "");
+  const [uploading, setUploading] = useState(false);
   useEffect(() => {
     if (profile) {
       setFullName(profile.full_name ?? "");
@@ -880,9 +907,37 @@ function AccountPanel({ profile, email, onSave, onSignOut }: {
     }
   }, [profile]);
 
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try { await onAvatarUpload(file); } finally { setUploading(false); }
+    e.target.value = "";
+  };
+
+  const name = profile?.full_name?.split(" ")[0] || email?.split("@")[0] || "K";
+  const initial = (name[0] || "K").toUpperCase();
+
   return (
     <Section eyebrow="Your Account" title={<>My <em>Account</em></>} sub={email}>
       <div className="space-y-5 max-w-lg">
+        <div className="flex items-center gap-4">
+          <label className="relative cursor-pointer group">
+            <div className="h-16 w-16 rounded-full bg-accent text-accent-foreground grid place-items-center font-display text-xl overflow-hidden">
+              {profile?.avatar_url
+                ? <img src={profile.avatar_url} alt={name} className="h-full w-full object-cover" />
+                : initial}
+            </div>
+            <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[9px] tracking-widest uppercase">
+              {uploading ? "…" : "Upload"}
+            </div>
+            <input type="file" accept="image/*" className="sr-only" onChange={handleFileChange} disabled={uploading} />
+          </label>
+          <div>
+            <p className="text-[10px] tracking-[0.18em] uppercase text-muted-foreground">Profile photo</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Click to upload</p>
+          </div>
+        </div>
         <Field label="Full name" value={fullName} onChange={setFullName} />
         <Field label="Phone" value={phone} onChange={setPhone} />
         <div className="flex gap-3 pt-3">
