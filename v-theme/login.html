@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en" data-kore-theme="void" data-mode="dark">
+<head>
+<script src="kore-theme-engine.js"></script>
+<link rel="stylesheet" href="kore-themes.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KORE — Sign In</title>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,300;0,6..96,400;1,6..96,300;1,6..96,400&family=Syne:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--error:#E07070;}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'Syne',sans-serif;background:var(--void);color:var(--cream);overflow-x:hidden;cursor:none;transition:background .4s,color .4s;min-height:100vh;display:flex;flex-direction:column;}
+.grain{position:fixed;inset:0;pointer-events:none;z-index:9990;opacity:.04;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");background-size:256px;}
+.cursor{position:fixed;width:12px;height:12px;background:var(--cream);border-radius:50%;pointer-events:none;z-index:9999;mix-blend-mode:difference;transition:width .3s,height .3s;}
+.cursor.big{width:48px;height:48px;}
+
+/* NAV */
+nav{position:fixed;top:0;width:100%;padding:1.4rem 2.5rem;display:flex;justify-content:space-between;align-items:center;z-index:800;}
+nav::after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,color-mix(in srgb,var(--void) 85%,transparent),transparent);pointer-events:none;z-index:-1;}
+.nav-logo{font-family:'Bodoni Moda',serif;font-size:1.1rem;letter-spacing:.1em;text-decoration:none;color:var(--cream);padding-left:.42em;}
+.theme-toggle{width:44px;height:24px;border-radius:999px;background:var(--border-v);border:1px solid var(--border-v);position:relative;cursor:none;transition:background .3s;}
+.theme-toggle-knob{position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:var(--cream);transition:transform .3s cubic-bezier(.34,1.56,.64,1);}
+[data-theme="light"] .theme-toggle-knob{transform:translateX(20px);}
+
+/* LAYOUT */
+.auth-wrap{flex:1;display:grid;grid-template-columns:1fr 1fr;min-height:100vh;}
+@media(max-width:800px){.auth-wrap{grid-template-columns:1fr;}}
+
+/* LEFT — IMAGE PANEL */
+.auth-image{position:relative;overflow:hidden;background:var(--surface);}
+@media(max-width:800px){.auth-image{display:none;}}
+.auth-image img{width:100%;height:100%;object-fit:cover;filter:brightness(.6) saturate(.8);}
+.auth-image-overlay{position:absolute;inset:0;background:linear-gradient(135deg,rgba(8,8,10,.7) 0%,rgba(8,8,10,.2) 100%);}
+.auth-image-text{position:absolute;bottom:3rem;left:3rem;right:3rem;}
+.auth-image-quote{font-family:'Bodoni Moda',serif;font-style:italic;font-size:1.4rem;font-weight:300;line-height:1.4;color:rgba(240,237,230,.85);margin-bottom:1rem;}
+.auth-image-label{font-size:1.1rem;letter-spacing:.12em;text-transform:uppercase;color:var(--brass);}
+.auth-image-num{position:absolute;top:3rem;left:3rem;font-family:'Bodoni Moda',serif;font-size:5rem;font-weight:300;color:rgba(240,237,230,.06);line-height:1;}
+
+/* RIGHT — FORM PANEL */
+.auth-form-panel{display:flex;flex-direction:column;justify-content:center;padding:6rem 4rem;background:var(--void);position:relative;}
+@media(max-width:1100px){.auth-form-panel{padding:6rem 2.5rem;}}
+@media(max-width:800px){.auth-form-panel{padding:7rem 1.5rem 3rem;}}
+
+.auth-eyebrow{font-size:1.1rem;letter-spacing:.1em;text-transform:uppercase;color:var(--brass);margin-bottom:1.2rem;}
+.auth-title{font-family:'Bodoni Moda',serif;font-size:clamp(2rem,4vw,3rem);font-weight:300;line-height:.95;margin-bottom:.5rem;}
+.auth-title em{font-style:italic;}
+.auth-sub{font-size:1.0rem;color:var(--dim);margin-bottom:3rem;line-height:1.7;}
+.auth-sub a{color:var(--brass);text-decoration:none;border-bottom:1px solid rgba(191,163,120,.3);padding-bottom:1px;transition:border-color .2s;}
+.auth-sub a:hover{border-color:var(--brass);}
+
+.form-group{display:flex;flex-direction:column;gap:.45rem;margin-bottom:1.2rem;}
+.form-label{font-size:1.1rem;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);}
+.form-input{background:var(--surface);border:1px solid var(--border-v);color:var(--cream);font-family:'Syne',sans-serif;font-size:.82rem;padding:.9rem 1.1rem;width:100%;outline:none;transition:border-color .25s,background .4s;-webkit-appearance:none;}
+.form-input::placeholder{color:rgba(138,135,128,.5);}
+.form-input:focus{border-color:var(--brass);}
+.form-input.error{border-color:var(--error);}
+
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+@media(max-width:500px){.form-row{grid-template-columns:1fr;}}
+
+.form-error{font-size:1.15rem;color:var(--error);letter-spacing:.1em;margin-top:.3rem;display:none;}
+.form-error.shown{display:block;}
+
+.form-forgot{text-align:right;margin-top:-.6rem;margin-bottom:1.4rem;}
+.form-forgot a{font-size:1.1rem;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);text-decoration:none;transition:color .2s;}
+.form-forgot a:hover{color:var(--cream);}
+
+.btn-auth{width:100%;padding:1.1rem;background:var(--brass);color:#08080A;border:none;font-family:'Syne',sans-serif;font-size:.94rem;letter-spacing:.12em;text-transform:uppercase;cursor:none;transition:background .3s;margin-bottom:1.2rem;position:relative;overflow:hidden;}
+.btn-auth:hover{background:var(--cream);}
+.btn-auth:disabled{opacity:.5;cursor:default;}
+.btn-auth .btn-loading{display:none;position:absolute;inset:0;background:inherit;align-items:center;justify-content:center;}
+.btn-auth.loading .btn-loading{display:flex;}
+.btn-auth.loading .btn-text{opacity:0;}
+
+.divider{display:flex;align-items:center;gap:1rem;margin:.5rem 0 1.2rem;}
+.divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--border-v);}
+.divider span{font-size:.84rem;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);}
+
+.btn-google{width:100%;padding:1rem;background:transparent;color:var(--cream);border:1px solid var(--border-v);font-family:'Syne',sans-serif;font-size:1.15rem;letter-spacing:.1em;text-transform:uppercase;cursor:none;transition:border-color .3s,color .3s;display:flex;align-items:center;justify-content:center;gap:.8rem;}
+.btn-google:hover{border-color:var(--cream);}
+.btn-google svg{width:16px;height:16px;flex-shrink:0;}
+
+.auth-global-error{background:rgba(224,112,112,.1);border:1px solid rgba(224,112,112,.3);padding:.8rem 1rem;font-size:.96rem;color:var(--error);margin-bottom:1.2rem;letter-spacing:.08em;display:none;}
+.auth-global-error.shown{display:block;}
+
+.auth-footer-note{font-size:1.1rem;letter-spacing:.04em;color:var(--dim);line-height:1.7;margin-top:2rem;padding-top:1.5rem;border-top:1px solid var(--border);}
+
+/* Spinner */
+.spinner{width:16px;height:16px;border:2px solid rgba(8,8,10,.3);border-top-color:#08080A;border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* Reveal */
+.reveal-up{opacity:0;transform:translateY(20px);animation:revUp .6s ease forwards;}
+.reveal-up:nth-child(2){animation-delay:.1s;}
+.reveal-up:nth-child(3){animation-delay:.2s;}
+.reveal-up:nth-child(4){animation-delay:.3s;}
+@keyframes revUp{to{opacity:1;transform:translateY(0);}}
+
+/* ── Mobile readability — max 480px ── */
+@media(max-width:480px){
+  body{font-size:16px;}
+  .auth-title{font-size:clamp(2rem,8vw,2.8rem);}
+  .auth-sub,.form-hint{font-size:.82rem;}
+  .form-label,.auth-label{font-size:.72rem;letter-spacing:.1em;}
+  .form-input,.auth-input{font-size:1rem;padding:.9rem 1rem;}
+  .btn-auth,.btn-next{font-size:.82rem;letter-spacing:.15em;padding:1rem 2rem;}
+  .auth-footer,.auth-link{font-size:.78rem;}
+}
+
+
+</style>
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+<div class="cursor" id="cursor"></div>
+
+<nav>
+  <a class="nav-logo" href="index.html">KORE</a>
+  <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+    <div class="theme-toggle-knob"></div>
+  </button>
+</nav>
+
+<div class="auth-wrap">
+  <!-- LEFT IMAGE -->
+  <div class="auth-image">
+    <img src="images/Forme 1.png" alt="KORE Collection">
+    <div class="auth-image-overlay"></div>
+    <div class="auth-image-num" aria-hidden="true">01</div>
+    <div class="auth-image-text">
+      <p class="auth-image-quote">"Built for the body that moves with purpose."</p>
+      <p class="auth-image-label">Collection I — 2026</p>
+    </div>
+  </div>
+
+  <!-- RIGHT FORM -->
+  <div class="auth-form-panel">
+    <p class="auth-eyebrow reveal-up">Member Access</p>
+    <h1 class="auth-title reveal-up">Sign <em>In</em></h1>
+    <p class="auth-sub reveal-up">New to KORE? <a href="signup.html">Create an account →</a></p>
+
+    <div class="auth-global-error" id="globalError"></div>
+
+    <div class="form-group reveal-up">
+      <label class="form-label" for="email">Email Address</label>
+      <input class="form-input" id="email" type="email" placeholder="you@email.com" autocomplete="email">
+    </div>
+
+    <div class="form-group reveal-up">
+      <label class="form-label" for="password">Password</label>
+      <input class="form-input" id="password" type="password" placeholder="••••••••" autocomplete="current-password">
+    </div>
+
+    <div class="form-forgot reveal-up">
+      <a href="forgot-password.html">Forgot password?</a>
+    </div>
+
+    <button class="btn-auth reveal-up" id="btnSignIn">
+      <span class="btn-text">Sign In →</span>
+      <span class="btn-loading"><span class="spinner"></span></span>
+    </button>
+
+    <div class="divider reveal-up"><span>or</span></div>
+
+    <button class="btn-google reveal-up" id="btnGoogle">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+      </svg>
+      Continue with Google
+    </button>
+
+    <p class="auth-footer-note reveal-up">By signing in you agree to KORE's terms. Your data is used only to manage your account, fit profile, and orders. We do not sell or share personal information.</p>
+  </div>
+</div>
+
+<script>
+// ── Supabase init ──
+const SUPABASE_URL = 'https://zrjljdybvzvjofgldwyc.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpyamxqZHlidnp2am9mZ2xkd3ljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MTAwNTgsImV4cCI6MjA5NDA4NjA1OH0.EQNM6u6eakZV3moJtAcvI0bYMieAn2JT1PZ5xmXsvls';
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ── Theme ──
+document.getElementById('themeToggle')?.addEventListener('click',function(){
+  var next=KoreTheme.get().mode==='dark'?'light':'dark';
+  KoreTheme.set('mode',next);
+});
+
+// ── Cursor ──
+const cur = document.getElementById('cursor');
+let mx=0,my=0,cx=0,cy=0;
+document.addEventListener('mousemove', e => { mx=e.clientX; my=e.clientY; });
+(function a(){ cx+=(mx-cx)*.15; cy+=(my-cy)*.15; cur.style.transform=`translate(${cx-6}px,${cy-6}px)`; requestAnimationFrame(a); })();
+document.querySelectorAll('a,button,input').forEach(el => {
+  el.addEventListener('mouseenter', () => cur.classList.add('big'));
+  el.addEventListener('mouseleave', () => cur.classList.remove('big'));
+});
+
+// ── Check already logged in ──
+(async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  if(session) window.location.href = 'index.html';
+})();
+
+// ── Show error ──
+function showError(msg) {
+  const el = document.getElementById('globalError');
+  el.textContent = msg;
+  el.classList.add('shown');
+}
+function clearError() {
+  document.getElementById('globalError').classList.remove('shown');
+}
+
+// ── Sign In ──
+document.getElementById('btnSignIn').addEventListener('click', async () => {
+  clearError();
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  if(!email || !password) { showError('Please enter your email and password.'); return; }
+
+  const btn = document.getElementById('btnSignIn');
+  btn.classList.add('loading');
+  btn.disabled = true;
+
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+
+  if(error) {
+    btn.classList.remove('loading');
+    btn.disabled = false;
+    showError(error.message === 'Invalid login credentials' ? 'Email or password is incorrect.' : error.message);
+  } else {
+    window.location.href = 'index.html';
+  }
+});
+
+// ── Enter key ──
+document.getElementById('password').addEventListener('keydown', e => {
+  if(e.key === 'Enter') document.getElementById('btnSignIn').click();
+});
+
+// ── Google ──
+document.getElementById('btnGoogle').addEventListener('click', async () => {
+  await sb.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: window.location.origin + '/index.html' }
+  });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,363 @@
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=Inter+Tight:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&family=Bodoni+Moda:ital,opsz,wght@0,6..96,300;0,6..96,400;1,6..96,300&family=Syne:wght@300;400;500;700&display=swap");
+@import "tailwindcss" source(none);
+@import "tw-animate-css";
+@source "../src";
+
+/* Fonts: editorial display + clean grotesk + classic v-theme pair */
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * KORE — Intelligent Casualwear
+ * Design system: "Void" — disciplined luxury, editorial typography, deep blacks,
+ * paper whites, single accent at a time. Themes shift the accent + grain.
+ *
+ * Theme classes applied to <html>: theme-void (default), theme-bone, theme-iron,
+ * theme-ember, theme-jade. Light/dark via .dark on <html>.
+ */
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-ring-offset-background: var(--background);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --color-void: var(--void);
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
+  --color-bone: var(--bone);
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+  --font-mono: var(--font-mono);
+}
+
+:root {
+  --radius: 0;
+
+  /* Type scale (user can shift via theme engine) */
+  --font-scale: 1;
+  --font-display: "Fraunces", "Times New Roman", serif;
+  --font-body: "Inter Tight", "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  /* Light / paper mode (default surface) */
+  --paper: oklch(0.985 0.003 90);
+  --ink: oklch(0.13 0.012 270);
+  --void: oklch(0.08 0.008 270);
+  --bone: oklch(0.94 0.01 80);
+
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --card: oklch(0.99 0.002 90);
+  --card-foreground: var(--ink);
+  --popover: var(--paper);
+  --popover-foreground: var(--ink);
+  --primary: var(--void);
+  --primary-foreground: var(--paper);
+  --secondary: oklch(0.92 0.008 80);
+  --secondary-foreground: var(--ink);
+  --muted: oklch(0.94 0.006 80);
+  --muted-foreground: oklch(0.45 0.012 270);
+  --accent: oklch(0.55 0.18 30); /* default accent — overridden by theme */
+  --accent-foreground: var(--paper);
+  --destructive: oklch(0.55 0.22 27);
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(0.88 0.006 80);
+  --input: oklch(0.9 0.006 80);
+  --ring: oklch(0.55 0.18 30 / 50%);
+
+  --chart-1: oklch(0.55 0.18 30);
+  --chart-2: oklch(0.6 0.12 200);
+  --chart-3: oklch(0.45 0.1 280);
+  --chart-4: oklch(0.7 0.15 80);
+  --chart-5: oklch(0.4 0.06 250);
+
+  --sidebar: var(--paper);
+  --sidebar-foreground: var(--ink);
+  --sidebar-primary: var(--void);
+  --sidebar-primary-foreground: var(--paper);
+  --sidebar-accent: oklch(0.94 0.006 80);
+  --sidebar-accent-foreground: var(--ink);
+  --sidebar-border: oklch(0.88 0.006 80);
+  --sidebar-ring: var(--accent);
+
+  /* Motion */
+  --motion-reduced: 0; /* 1 disables transitions */
+  --grain-opacity: 0.04;
+}
+
+.dark {
+  --background: var(--void);
+  --foreground: var(--paper);
+  --card: oklch(0.11 0.01 270);
+  --card-foreground: var(--paper);
+  --popover: oklch(0.1 0.01 270);
+  --popover-foreground: var(--paper);
+  --primary: var(--paper);
+  --primary-foreground: var(--void);
+  --secondary: oklch(0.18 0.012 270);
+  --secondary-foreground: var(--paper);
+  --muted: oklch(0.16 0.01 270);
+  --muted-foreground: oklch(0.62 0.012 270);
+  --accent: oklch(0.6 0.2 30);
+  --accent-foreground: var(--void);
+  --destructive: oklch(0.65 0.22 27);
+  --destructive-foreground: var(--paper);
+  --border: oklch(1 0 0 / 8%);
+  --input: oklch(1 0 0 / 12%);
+  --ring: oklch(0.6 0.2 30 / 50%);
+  --sidebar: var(--void);
+  --sidebar-foreground: var(--paper);
+  --sidebar-primary: var(--paper);
+  --sidebar-primary-foreground: var(--void);
+  --sidebar-accent: oklch(0.16 0.01 270);
+  --sidebar-accent-foreground: var(--paper);
+  --sidebar-border: oklch(1 0 0 / 8%);
+  --grain-opacity: 0.06;
+}
+
+/* Theme accents — applied alongside .dark/light via classes on <html> */
+.theme-void   { --accent: oklch(0.55 0.2 30); }   /* ember-rust */
+.theme-bone   { --accent: oklch(0.78 0.07 75); }  /* warm sand */
+.theme-iron   { --accent: oklch(0.55 0.04 250); } /* cold steel */
+.theme-ember  { --accent: oklch(0.62 0.22 40); }  /* fire */
+.theme-jade   { --accent: oklch(0.58 0.13 165); } /* deep green */
+.theme-blanc  { --accent: oklch(0.72 0.05 65); }  /* paper */
+.theme-terre  { --accent: oklch(0.6 0.12 55); }   /* terracotta */
+.theme-nuit   { --accent: oklch(0.58 0.14 270); } /* deep indigo */
+
+/* Typeface modes — swap whole font stack */
+.face-classic {
+  --font-display: "Bodoni Moda", "Times New Roman", serif;
+  --font-body: "Syne", system-ui, sans-serif;
+}
+.face-modern {
+  --font-display: "Fraunces", "Times New Roman", serif;
+  --font-body: "Inter Tight", "Inter", system-ui, sans-serif;
+}
+
+/* Motion preference */
+.motion-reduced *,
+.motion-reduced *::before,
+.motion-reduced *::after {
+  transition-duration: 0ms !important;
+  animation-duration: 0ms !important;
+  animation-iteration-count: 1 !important;
+}
+
+@layer base {
+  * { border-color: var(--color-border); }
+
+  html {
+    font-size: calc(16px * var(--font-scale, 1));
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-body);
+    font-feature-settings: "ss01", "cv11";
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1, h2, h3, h4, .display {
+    font-family: var(--font-display);
+    font-weight: 300;
+    letter-spacing: -0.02em;
+    line-height: 0.95;
+  }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-size: 0.72rem;
+  }
+
+  /* ── Journal / blog prose ─────────────────────────────────────────────── */
+  .kore-prose {
+    font-family: var(--font-body);
+    font-size: 1.0625rem;
+    line-height: 1.78;
+    color: var(--color-foreground);
+  }
+
+  /* Drop cap on the very first paragraph — desktop only */
+  @media (min-width: 640px) {
+    .kore-prose > p:first-of-type::first-letter {
+      font-family: var(--font-display);
+      font-size: 4em;
+      font-weight: 300;
+      line-height: 0.82;
+      float: left;
+      margin-right: 0.1em;
+      margin-top: 0.08em;
+      color: var(--color-accent);
+    }
+  }
+
+  .kore-prose p {
+    margin-top: 0;
+    margin-bottom: 1.35em;
+  }
+
+  /* Headings — sized for body content, not for page titles */
+  .kore-prose h1,
+  .kore-prose h2,
+  .kore-prose h3,
+  .kore-prose h4 {
+    font-family: var(--font-display);
+    font-weight: 300;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    margin-top: 2em;
+    margin-bottom: 0.4em;
+    color: var(--color-foreground);
+  }
+
+  .kore-prose h1 { font-size: 1.9rem; }
+  .kore-prose h2 { font-size: 1.5rem; }
+  .kore-prose h3 {
+    font-size: 1.2rem;
+    font-style: italic;
+    color: var(--color-accent);
+  }
+  .kore-prose h4 {
+    font-family: var(--font-mono);
+    font-style: normal;
+    font-size: 0.7rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--color-muted-foreground);
+  }
+
+  /* Tighten the top margin when a heading directly follows another heading */
+  .kore-prose h1 + h2,
+  .kore-prose h2 + h3,
+  .kore-prose h3 + h4 { margin-top: 0.6em; }
+
+  /* Blockquote */
+  .kore-prose blockquote {
+    border-left: 2px solid var(--color-accent);
+    margin: 2em 0;
+    padding: 0.25em 0 0.25em 1.5em;
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 1.2rem;
+    line-height: 1.5;
+  }
+  .kore-prose blockquote p { margin-bottom: 0; }
+
+  /* Links */
+  .kore-prose a {
+    color: var(--color-accent);
+    text-decoration: underline;
+    text-decoration-color: color-mix(in oklab, var(--color-accent) 35%, transparent);
+    text-underline-offset: 3px;
+    transition: text-decoration-color 200ms;
+  }
+  .kore-prose a:hover { text-decoration-color: var(--color-accent); }
+
+  /* Strong / em */
+  .kore-prose strong { font-weight: 500; }
+  .kore-prose em {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 1.04em;
+  }
+
+  /* Lists */
+  .kore-prose ul,
+  .kore-prose ol {
+    padding-left: 1.4em;
+    margin-bottom: 1.35em;
+  }
+  .kore-prose li { margin-bottom: 0.45em; line-height: 1.65; }
+  .kore-prose ul > li::marker { color: var(--color-accent); }
+  .kore-prose ol > li::marker {
+    font-family: var(--font-mono);
+    font-size: 0.78em;
+    color: var(--color-muted-foreground);
+  }
+
+  /* Horizontal rule */
+  .kore-prose hr {
+    border: none;
+    border-top: 1px solid var(--color-border);
+    margin: 2.5em auto;
+    width: 40%;
+  }
+
+  /* Images */
+  .kore-prose img {
+    width: 100%;
+    height: auto;
+    margin: 2em 0;
+    display: block;
+  }
+
+  /* Code */
+  .kore-prose code {
+    font-family: var(--font-mono);
+    font-size: 0.85em;
+    background: var(--color-muted);
+    padding: 0.15em 0.38em;
+  }
+  .kore-prose pre {
+    background: var(--color-muted);
+    padding: 1.25em 1.5em;
+    overflow-x: auto;
+    margin-bottom: 1.35em;
+  }
+  .kore-prose pre code { background: none; padding: 0; }
+
+  /* Grain overlay — uses an SVG noise via data URI */
+  .grain::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 50;
+    opacity: var(--grain-opacity, 0.04);
+    background-image: url("data:image/svg+xml;utf8,<svg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.6 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    mix-blend-mode: overlay;
+  }
+}

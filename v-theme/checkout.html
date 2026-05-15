@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en" data-kore-theme="void" data-mode="dark">
+<head>
+<script src="kore-theme-engine.js"></script>
+<link rel="stylesheet" href="kore-themes.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KORE — Checkout</title>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,300;0,6..96,400;1,6..96,300;1,6..96,400&family=Syne:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://js.paystack.co/v1/inline.js"></script>
+<style>
+:root{--err:#E07070;}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;cursor:none;transition:background .4s,color .4s;}
+.grain{position:fixed;inset:0;pointer-events:none;z-index:9990;opacity:.035;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");background-size:256px;}
+.cursor{position:fixed;width:12px;height:12px;background:var(--ink);border-radius:50%;pointer-events:none;z-index:9999;mix-blend-mode:difference;transform:translate(-50%,-50%);transition:width .3s,height .3s;}
+.cursor.big{width:48px;height:48px;}
+@media(pointer:coarse){.cursor{display:none;}}
+
+/* NAV */
+nav{position:fixed;top:0;width:100%;padding:1.2rem 2.5rem;display:flex;justify-content:space-between;align-items:center;z-index:800;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);}
+.nav-logo{font-family:'Bodoni Moda',serif;font-size:1rem;letter-spacing:.1em;text-decoration:none;color:var(--ink);padding-left:.42em;}
+.nav-right{display:flex;align-items:center;gap:1.2rem;}
+.nav-back{font-size:1.1rem;letter-spacing:.1em;text-transform:uppercase;text-decoration:none;color:var(--dim);transition:color .2s;}
+.nav-back:hover{color:var(--accent);}
+.theme-toggle{width:40px;height:22px;border-radius:999px;background:var(--border-v);border:1px solid var(--border-v);position:relative;cursor:pointer;flex-shrink:0;}
+.theme-toggle-knob{position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:var(--ink);transition:transform .3s cubic-bezier(.34,1.56,.64,1);}
+[data-mode="light"] .theme-toggle-knob{transform:translateX(18px);}
+
+/* LAYOUT */
+.co-wrap{max-width:1140px;margin:0 auto;padding:6rem 2rem 5rem;display:grid;grid-template-columns:1fr 400px;gap:3rem;align-items:start;}
+@media(max-width:960px){.co-wrap{grid-template-columns:1fr;padding:5rem 1.5rem 4rem;}}
+.co-form{display:flex;flex-direction:column;gap:1.5rem;}
+
+/* SECTION */
+.cs{background:var(--surface);border:1px solid var(--border);padding:1.8rem;transition:background .4s;}
+.cs-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid var(--border);}
+.cs-left{display:flex;align-items:baseline;gap:.8rem;}
+.cn{font-family:'Bodoni Moda',serif;font-size:2.2rem;font-weight:300;color:rgba(138,134,128,.15);line-height:1;}
+.ct{font-family:'Bodoni Moda',serif;font-size:1.05rem;font-weight:300;}
+.ct em{font-style:italic;color:var(--accent);}
+.pfill{background:none;border:1px solid rgba(196,164,107,.25);color:var(--accent);font-family:'Syne',sans-serif;font-size:.80rem;letter-spacing:.1em;text-transform:uppercase;padding:.3rem .8rem;cursor:pointer;transition:all .2s;}
+.pfill:hover{background:rgba(196,164,107,.1);}
+
+/* FIELDS */
+.fg{display:flex;flex-direction:column;gap:.38rem;}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+@media(max-width:600px){.fg2{grid-template-columns:1fr;}}
+.fs2{grid-column:1/-1;}
+.fl{font-size:.82rem;letter-spacing:.24em;text-transform:uppercase;color:var(--dim);}
+.fl em{color:var(--accent);font-style:normal;}
+.fi,.fsl,.fta{background:var(--bg);border:1px solid var(--border-v);color:var(--ink);font-family:'Syne',sans-serif;font-size:1.05rem;padding:.82rem 1rem;width:100%;outline:none;transition:border-color .25s,background .4s;-webkit-appearance:none;}
+.fi::placeholder{color:rgba(138,134,128,.4);}
+.fi:focus,.fsl:focus,.fta:focus{border-color:var(--accent);}
+.fsl option{background:var(--surface);}
+.fta{resize:none;min-height:72px;line-height:1.6;}
+.fi.ok{border-color:rgba(112,184,112,.35);background:rgba(112,184,112,.03);}
+
+/* SIZE */
+.szr{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.2rem;}
+.sz{width:46px;height:46px;display:flex;align-items:center;justify-content:center;background:transparent;border:1px solid var(--border-v);color:var(--dim);cursor:pointer;font-family:'Syne',sans-serif;font-size:1.0rem;transition:all .2s;}
+.sz:hover{border-color:var(--accent);color:var(--ink);}
+.sz.on{background:var(--accent);border-color:var(--accent);color:var(--bg);}
+.sz.fp{border-color:var(--accent);color:var(--accent);}
+.sz[data-s="Custom"]{width:auto;padding:0 .9rem;}
+.cmeas{display:none;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border);}
+.cmeas.show{display:block;}
+.mg3{display:grid;grid-template-columns:repeat(3,1fr);gap:.8rem;}
+@media(max-width:500px){.mg3{grid-template-columns:1fr 1fr;}}
+
+/* QTY */
+.qc{display:flex;align-items:center;gap:.8rem;margin-top:1rem;}
+.ql{font-size:.82rem;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);}
+.qb{background:var(--bg);border:1px solid var(--border-v);color:var(--ink);width:30px;height:30px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+.qb:hover{background:var(--accent);border-color:var(--accent);color:var(--bg);}
+.qn{font-family:'Bodoni Moda',serif;font-size:1.1rem;min-width:24px;text-align:center;}
+
+/* SHIPPING */
+.ship-box{background:var(--bg);border:1px solid var(--border-v);padding:1.2rem;margin-top:1.2rem;display:none;}
+.ship-box.on{display:block;}
+.ship-ttl{font-size:.84rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:.8rem;}
+.ship-opts{display:flex;flex-direction:column;gap:.5rem;}
+.sopt{display:flex;align-items:center;gap:.9rem;padding:.85rem 1rem;border:1px solid var(--border-v);cursor:pointer;transition:all .2s;}
+.sopt:hover{border-color:rgba(196,164,107,.3);}
+.sopt.on{border-color:var(--accent);background:rgba(196,164,107,.04);}
+.sopt input{accent-color:var(--accent);flex-shrink:0;}
+.soi{flex:1;}
+.son{font-size:.96rem;letter-spacing:.06em;margin-bottom:.15rem;}
+.soe{font-size:.84rem;color:var(--dim);}
+.sop{font-family:'Bodoni Moda',serif;font-size:1.2rem;color:var(--accent);flex-shrink:0;}
+.ship-hint{font-size:1.1rem;color:var(--dim);margin-top:.8rem;letter-spacing:.1em;}
+
+/* SUMMARY */
+.sum-wrap{position:sticky;top:5.5rem;}
+@media(max-width:960px){.sum-wrap{position:static;}}
+.sum-box{background:var(--surface);border:1px solid var(--border);padding:1.8rem;transition:background .4s;}
+.sum-ttl{font-family:'Bodoni Moda',serif;font-size:1.1rem;font-weight:300;padding-bottom:1rem;border-bottom:1px solid var(--border);margin-bottom:1.4rem;}
+.sum-ttl em{font-style:italic;color:var(--accent);}
+.sum-prod{display:flex;gap:1rem;margin-bottom:1.4rem;padding-bottom:1.4rem;border-bottom:1px solid var(--border);}
+.sum-img{width:68px;height:86px;object-fit:cover;flex-shrink:0;background:var(--bg);}
+.sum-info{flex:1;}
+.sum-sr{font-size:1.05rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:.2rem;}
+.sum-nm{font-family:'Bodoni Moda',serif;font-size:1.2rem;margin-bottom:.25rem;}
+.sum-mt{font-size:.90rem;color:var(--dim);line-height:1.6;}
+.pl{display:flex;justify-content:space-between;align-items:baseline;padding:.45rem 0;}
+.pk{font-size:.90rem;letter-spacing:.1em;color:var(--dim);}
+.pv{font-size:1.0rem;}
+.pdiv{height:1px;background:var(--border);margin:.6rem 0;}
+.ptot{display:flex;justify-content:space-between;align-items:baseline;padding:.7rem 0;}
+.ptk{font-size:.90rem;letter-spacing:.1em;text-transform:uppercase;}
+.ptv{font-family:'Bodoni Moda',serif;font-size:1.3rem;}
+.ptv em{font-style:italic;color:var(--accent);}
+.pusd{font-size:.82rem;color:var(--dim);text-align:right;margin-top:.1rem;}
+.fx-note{font-size:.82rem;letter-spacing:.08em;color:var(--dim);line-height:1.7;padding:.7rem;background:rgba(196,164,107,.05);border:1px solid rgba(196,164,107,.12);margin-bottom:1.2rem;}
+.fx-v{color:var(--accent);}
+
+/* ERROR */
+.err{background:rgba(224,112,112,.08);border:1px solid rgba(224,112,112,.25);padding:.7rem 1rem;font-size:1.15rem;color:var(--err);letter-spacing:.08em;margin-bottom:1rem;display:none;}
+.err.on{display:block;}
+
+/* PAY BTN */
+.btn-pay{width:100%;padding:1.1rem;background:var(--accent);color:var(--bg);border:none;font-family:'Syne',sans-serif;font-size:.94rem;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:opacity .3s;display:flex;align-items:center;justify-content:center;gap:.6rem;margin-bottom:.8rem;}
+.btn-pay:hover:not(:disabled){opacity:.8;}
+.btn-pay:disabled{opacity:.5;}
+.pay-note{font-size:.82rem;letter-spacing:.1em;color:var(--dim);text-align:center;line-height:1.7;margin-bottom:1rem;}
+.trust-row{display:flex;justify-content:center;gap:1.2rem;padding-top:.8rem;border-top:1px solid var(--border);}
+.trust-item{font-size:1.05rem;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);}
+
+/* SPINNER */
+.spin{width:14px;height:14px;border:2px solid rgba(8,8,10,.3);border-top-color:var(--bg);border-radius:50%;animation:spin .6s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* SUCCESS */
+.scs{position:fixed;inset:0;z-index:1000;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:2rem;}
+.scs.on{display:flex;}
+.scs-g{font-family:'Bodoni Moda',serif;font-size:5rem;font-weight:300;color:var(--accent);margin-bottom:1.5rem;animation:gp .8s cubic-bezier(.34,1.56,.64,1);}
+@keyframes gp{from{opacity:0;transform:scale(.4);}to{opacity:1;transform:scale(1);}}
+.scs-t{font-family:'Bodoni Moda',serif;font-size:2.2rem;font-weight:300;margin-bottom:.6rem;}
+.scs-t em{font-style:italic;color:var(--accent);}
+.scs-o{font-size:.96rem;letter-spacing:.1em;color:var(--accent);margin-bottom:.8rem;}
+.scs-s{font-size:1.0rem;color:var(--dim);line-height:1.9;max-width:440px;margin-bottom:2.5rem;}
+.scs-a{display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;}
+.btn-sol{background:var(--accent);color:var(--bg);border:none;font-family:'Syne',sans-serif;font-size:.90rem;letter-spacing:.12em;text-transform:uppercase;padding:.9rem 2rem;cursor:pointer;text-decoration:none;transition:opacity .2s;}
+.btn-sol:hover{opacity:.8;}
+.btn-out{background:none;border:1px solid var(--border-v);color:var(--dim);font-family:'Syne',sans-serif;font-size:.90rem;letter-spacing:.12em;text-transform:uppercase;padding:.9rem 2rem;cursor:pointer;text-decoration:none;transition:all .2s;}
+.btn-out:hover{border-color:var(--accent);color:var(--accent);}
+
+@media(max-width:600px){.co-wrap{padding:4.5rem 1rem 4rem;}.cs{padding:1.2rem;}.sum-box{padding:1.4rem;}}
+</style>
+</head>
+<body>
+<div class="grain"></div>
+<div class="cursor" id="cur"></div>
+
+<nav>
+  <a class="nav-logo" href="index.html">KORE</a>
+  <div class="nav-right">
+    <a class="nav-back" href="collection.html">← Collection</a>
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+      <div class="theme-toggle-knob"></div>
+    </button>
+  </div>
+</nav>
+
+<form class="co-wrap" id="checkoutForm" novalidate>
+  <div class="co-form">
+    <div class="err" id="errBox"></div>
+
+    <div class="cs">
+      <div class="cs-head">
+        <div class="cs-left"><span class="cn">01</span><h2 class="ct">Contact <em>Details</em></h2></div>
+        <button type="button" class="pfill" onclick="pfContact()">↓ From Profile</button>
+      </div>
+      <div class="fg2">
+        <div class="fg"><label class="fl" for="f1">First Name <em>*</em></label><input class="fi" id="f1" type="text" placeholder="First name" autocomplete="given-name" required></div>
+        <div class="fg"><label class="fl" for="f2">Last Name</label><input class="fi" id="f2" type="text" placeholder="Last name" autocomplete="family-name"></div>
+        <div class="fg"><label class="fl" for="f3">Email <em>*</em></label><input class="fi" id="f3" type="email" placeholder="your@email.com" autocomplete="email" required></div>
+        <div class="fg"><label class="fl" for="f4">Phone <em>*</em></label><input class="fi" id="f4" type="tel" placeholder="+234..." autocomplete="tel" required></div>
+      </div>
+    </div>
+
+    <div class="cs">
+      <div class="cs-head">
+        <div class="cs-left"><span class="cn">02</span><h2 class="ct">Delivery <em>Address</em></h2></div>
+        <button type="button" class="pfill" onclick="pfAddress()">↓ From Profile</button>
+      </div>
+      <div class="fg2">
+        <div class="fg fs2"><label class="fl" for="f5">Street Address <em>*</em></label><input class="fi" id="f5" type="text" placeholder="Street, building, area..." autocomplete="street-address" required></div>
+        <div class="fg"><label class="fl" for="f6">City <em>*</em></label><input class="fi" id="f6" type="text" placeholder="e.g. Lagos" autocomplete="address-level2" required></div>
+        <div class="fg">
+          <label class="fl" for="f7">State <em>*</em></label>
+          <select class="fsl" id="f7" onchange="onStateChange()" required>
+            <option value="">Select state...</option>
+            <option value="Lagos" data-zone="lagos">Lagos</option>
+            <option value="Ogun" data-zone="southwest">Ogun</option><option value="Oyo" data-zone="southwest">Oyo</option><option value="Osun" data-zone="southwest">Osun</option>
+            <option value="Rivers" data-zone="southsouth">Rivers</option><option value="Delta" data-zone="southsouth">Delta</option><option value="Edo" data-zone="southsouth">Edo</option>
+            <option value="Abuja (FCT)" data-zone="north">Abuja (FCT)</option>
+          </select>
+        </div>
+        <div class="fg fs2"><label class="fl" for="f8">Delivery Instructions</label><textarea class="fta" id="f8" placeholder="Landmark, gate code, best time to receive..."></textarea></div>
+      </div>
+      <div class="ship-box" id="shipBox">
+        <p class="ship-ttl">Shipping to <span id="shipState">...</span></p>
+        <div class="ship-opts" id="shipOpts"></div>
+      </div>
+      <p class="ship-hint" id="shipHint">Select your state to see shipping rates and options.</p>
+    </div>
+
+    <div class="cs">
+      <div class="cs-head">
+        <div class="cs-left"><span class="cn">03</span><h2 class="ct">Size & <em>Fit</em></h2></div>
+        <button type="button" class="pfill" onclick="pfFit()">↓ From Profile</button>
+      </div>
+      <p class="fl" style="margin-bottom:.7rem;">Standard Size</p>
+      <div class="szr">
+        <button type="button" class="sz on" data-s="S" onclick="pickSz(this)">S</button>
+        <button type="button" class="sz" data-s="M" onclick="pickSz(this)">M</button>
+        <button type="button" class="sz" data-s="L" onclick="pickSz(this)">L</button>
+        <button type="button" class="sz" data-s="XL" onclick="pickSz(this)">XL</button>
+        <button type="button" class="sz" data-s="XXL" onclick="pickSz(this)">XXL</button>
+        <button type="button" class="sz" data-s="XS" onclick="pickSz(this)">XS</button>
+        <button type="button" class="sz" data-s="Custom" onclick="pickSz(this)">Custom</button>
+      </div>
+      <div class="cmeas" id="cmeas">
+        <p class="fl" style="margin-bottom:.7rem;">Measurements (cm)</p>
+        <div class="mg3">
+          <div class="fg"><label class="fl">Chest</label><input class="fi" id="mC" type="number" placeholder="96"></div>
+          <div class="fg"><label class="fl">Waist</label><input class="fi" id="mW" type="number" placeholder="82"></div>
+          <div class="fg"><label class="fl">Hips</label><input class="fi" id="mH" type="number" placeholder="98"></div>
+          <div class="fg"><label class="fl">Shoulder</label><input class="fi" id="mS" type="number" placeholder="44"></div>
+          <div class="fg"><label class="fl">Inseam</label><input class="fi" id="mI" type="number" placeholder="79"></div>
+          <div class="fg"><label class="fl">Height</label><input class="fi" id="mHt" type="number" placeholder="178"></div>
+        </div>
+      </div>
+      <div class="fg" style="margin-top:1rem;">
+        <label class="fl" for="f9">Fit Preferences</label>
+        <textarea class="fta" id="f9" placeholder="e.g. relaxed shoulder, longer hem, slim torso..."></textarea>
+      </div>
+      <div class="qc">
+        <span class="ql">Quantity</span>
+        <button type="button" class="qb" onclick="chQty(-1)">&#8722;</button>
+        <span class="qn" id="qNum">1</span>
+        <button type="button" class="qb" onclick="chQty(1)">+</button>
+      </div>
+    </div>
+
+    <div class="cs">
+      <div class="cs-head">
+        <div class="cs-left"><span class="cn">04</span><h2 class="ct">Order <em>Notes</em></h2></div>
+      </div>
+      <div class="fg"><label class="fl" for="f10">Special Requests (optional)</label><textarea class="fta" id="f10" placeholder="Gift wrapping, urgency, anything else..."></textarea></div>
+    </div>
+  </div>
+
+  <div class="sum-wrap">
+    <div class="sum-box">
+      <h2 class="sum-ttl">Your <em>Order</em></h2>
+      <div class="sum-prod">
+        <img class="sum-img" id="sumImg" src="images/Forme 1.png" alt="Product Image">
+        <div class="sum-info">
+          <p class="sum-sr" id="sumSr">Forme</p>
+          <p class="sum-nm" id="sumNm">Cotton Shirt / I</p>
+          <p class="sum-mt" id="sumMt">Size: S &middot; Qty: 1</p>
+          <p class="sum-mt" style="color:var(--accent);margin-top:.3rem;">Made to order &middot; No restocks</p>
+        </div>
+      </div>
+      <div class="pl"><span class="pk">Item</span><span class="pv" id="pIt">&#8358;270,000</span></div>
+      <div class="pl"><span class="pk">Quantity</span><span class="pv" id="pQt">&times; 1</span></div>
+      <div class="pl"><span class="pk">Shipping</span><span class="pv" id="pSh" style="color:var(--dim);">Select state</span></div>
+      <div class="pdiv"></div>
+      <div class="ptot"><span class="ptk">Total</span><div><p class="ptv"><em id="pTot">&#8358;270,000</em></p><p class="pusd" id="pUsd">&asymp; $169 USD</p></div></div>
+      <div class="fx-note">Live rate: <span class="fx-v" id="fxDisp">$1 = &#8358;1,600</span>. Payment in NGN via Paystack.</div>
+      <button type="submit" class="btn-pay" id="btnPay">Pay Now &rarr;</button>
+      <p class="pay-note">Confirmed within 24 hours. Production begins after payment. No restocks once sold out.</p>
+      <div class="trust-row">
+        <span class="trust-item">&#10003; Paystack Secured</span>
+        <span class="trust-item">&#10003; Authenticated</span>
+        <span class="trust-item">&#10003; Made to Order</span>
+      </div>
+    </div>
+  </div>
+</form>
+
+<div class="scs" id="scs">
+  <div class="scs-g">&#10022;</div>
+  <h2 class="scs-t">Order <em>Placed</em></h2>
+  <p class="scs-o" id="scsNum">KORE-2026-0001</p>
+  <p class="scs-s">Thank you. We'll confirm within 24 hours and arrange delivery. Your piece is now in the production queue.</p>
+  <div class="scs-a">
+    <a class="btn-sol" href="dashboard.html">My Orders &rarr;</a>
+    <a class="btn-out" href="collection.html">Back to Collection</a>
+  </div>
+</div>
+
+<script>
+// ── Secure Configuration ──
+const SU = window.ENV?.SUPABASE_URL || 'YOUR_SUPABASE_URL';
+const SK = window.ENV?.SUPABASE_ANON_KEY || 'YOUR_SUPABASE_ANON_KEY';
+const PK = window.ENV?.PAYSTACK_PUBLIC_KEY || 'YOUR_PAYSTACK_KEY';
+const sb = supabase.createClient(SU, SK);
+
+const ZONES={
+  lagos:{opts:[{n:'Standard Delivery',e:'1-2 days after production',p:3500},{n:'Express Delivery',e:'Same/next day after production',p:6000}]},
+  southwest:{opts:[{n:'Standard Delivery',e:'2-3 days after production',p:5500},{n:'Express Delivery',e:'1-2 days after production',p:9000}]},
+  southsouth:{opts:[{n:'Standard Delivery',e:'3-4 days after production',p:7500},{n:'Express Delivery',e:'2 days after production',p:12000}]},
+  north:{opts:[{n:'Standard Delivery',e:'4-5 days after production',p:8500},{n:'Express Delivery',e:'2-3 days after production',p:14000}]}
+};
+
+let usr=null, prof=null, qty=1, sz='S', shpP=0, shpOk=false, fx=1600, base=270000, pName='Cotton Shirt / I', pSeries='Forme';
+
+// ── Theme Engine ──
+document.getElementById('themeToggle')?.addEventListener('click', () => {
+  const next = KoreTheme.get().mode === 'dark' ? 'light' : 'dark';
+  KoreTheme.set('mode', next);
+});
+
+// ── Optimized Cursor ──
+const cur = document.getElementById('cur');
+let mouseX=0, mouseY=0, curX=0, curY=0;
+document.addEventListener('mousemove', e => { mouseX=e.clientX; mouseY=e.clientY; });
+function animateCursor() {
+  curX += (mouseX - curX) * 0.2;
+  curY += (mouseY - curY) * 0.2;
+  cur.style.transform = `translate(${curX - 6}px, ${curY - 6}px)`;
+  requestAnimationFrame(animateCursor);
+}
+requestAnimationFrame(animateCursor);
+document.querySelectorAll('a, button, input, select, textarea').forEach(el => {
+  el.addEventListener('mouseenter', () => cur.classList.add('big'));
+  el.addEventListener('mouseleave', () => cur.classList.remove('big'));
+});
+
+// ── Initialization ──
+(async function(){
+  const p = new URLSearchParams(window.location.search);
+  pName = p.get('product') || 'Cotton Shirt / I';
+  pSeries = p.get('series') || 'Forme';
+  base = parseInt(p.get('price') || '270000');
+  const img = p.get('img') || 'images/Forme 1.png';
+  if(p.get('size')) setSz(p.get('size'));
+  
+  document.getElementById('sumNm').textContent = pName;
+  document.getElementById('sumSr').textContent = pSeries;
+  document.getElementById('sumImg').src = img;
+
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if(session){
+      usr = session.user;
+      const { data: pr } = await sb.from('profiles').select('*').eq('id', usr.id).single();
+      if(pr) { prof = pr; pfContact(); pfAddress(); pfFit(); }
+    }
+  } catch(e) {}
+
+  try {
+    const { data: fr } = await sb.from('fx_rates').select('rate').order('fetched_at',{ascending:false}).limit(1).single();
+    if(fr?.rate) fx = fr.rate;
+  } catch(e) {}
+  
+  upPrices();
+})();
+
+// ── Form Autofill Helpers ──
+function fill(id,v){const el=document.getElementById(id);if(el&&v!=null&&v!==''){el.value=v;el.classList.add('ok');}}
+function pfContact(){if(!prof)return;fill('f1',prof.first_name);fill('f2',prof.last_name);fill('f3',prof.email||(usr&&usr.email));fill('f4',prof.phone);}
+function pfAddress(){if(!prof)return;fill('f6',prof.city);}
+function pfFit(){
+  if(!prof)return;
+  if(prof.fit_size) setSz(prof.fit_size);
+  fill('mC',prof.fit_chest);fill('mW',prof.fit_waist);fill('mH',prof.fit_hips);
+  fill('mS',prof.fit_shoulder);fill('mI',prof.fit_inseam);fill('mHt',prof.fit_height);
+  fill('f9',prof.fit_notes);
+}
+
+// ── Interactivity ──
+function setSz(s){
+  document.querySelectorAll('.sz').forEach(b => {
+    b.classList.remove('on','fp');
+    if(b.dataset.s===s){b.classList.add('on','fp'); sz=s;}
+  });
+  document.getElementById('cmeas').classList.toggle('show', s==='Custom');
+  upMeta();
+}
+function pickSz(btn){
+  document.querySelectorAll('.sz').forEach(b => b.classList.remove('on','fp'));
+  btn.classList.add('on'); sz=btn.dataset.s;
+  document.getElementById('cmeas').classList.toggle('show', sz==='Custom');
+  upMeta();
+}
+function chQty(d){qty=Math.max(1,Math.min(10,qty+d));document.getElementById('qNum').textContent=qty;upPrices();}
+function upMeta(){document.getElementById('sumMt').textContent=`Size: ${sz} · Qty: ${qty}`;}
+
+function onStateChange(){
+  const sel=document.getElementById('f7');
+  const opt=sel.options[sel.selectedIndex];
+  const zone=opt?.dataset?.zone;
+  const box=document.getElementById('shipBox');
+  const hint=document.getElementById('shipHint');
+  
+  if(!zone || !ZONES[zone]){
+    box.classList.remove('on'); shpP=0; shpOk=false; hint.style.display=''; upPrices(); return;
+  }
+  
+  document.getElementById('shipState').textContent=opt.value;
+  const z=ZONES[zone]; shpOk=false; shpP=0;
+  
+  let html='';
+  z.opts.forEach((o,i)=>{
+    html+=`<div class="sopt${i===0?' on':''}" data-p="${o.p}" onclick="pickShip(this,${o.p})">
+      <input type="radio" name="ship"${i===0?' checked':''}>
+      <div class="soi"><p class="son">${o.n}</p><p class="soe">${o.e}</p></div>
+      <span class="sop">₦${o.p.toLocaleString()}</span></div>`;
+  });
+  document.getElementById('shipOpts').innerHTML=html;
+  
+  const first=document.querySelector('.sopt.on');
+  if(first) pickShip(first, z.opts[0].p);
+  
+  box.classList.add('on'); hint.style.display='none';
+}
+
+function pickShip(el,price){
+  document.querySelectorAll('.sopt').forEach(o=>{o.classList.remove('on');o.querySelector('input').checked=false;});
+  el.classList.add('on'); el.querySelector('input').checked=true;
+  shpP=price; shpOk=true; upPrices();
+}
+
+function upPrices(){
+  const tot=(base*qty)+shpP;
+  const usd=Math.round(tot/fx);
+  document.getElementById('pIt').textContent='₦'+base.toLocaleString();
+  document.getElementById('pQt').textContent='× '+qty;
+  document.getElementById('pSh').textContent=shpOk?'₦'+shpP.toLocaleString():'Select state';
+  document.getElementById('pSh').style.color=shpOk?'var(--ink)':'var(--dim)';
+  document.getElementById('pTot').textContent='₦'+tot.toLocaleString();
+  document.getElementById('pUsd').textContent='≈ $'+usd+' USD';
+  document.getElementById('fxDisp').textContent='$1 = ₦'+fx.toLocaleString();
+  upMeta();
+}
+
+function showErr(m){
+  const e=document.getElementById('errBox');
+  e.textContent=m; e.classList.add('on'); e.scrollIntoView({behavior:'smooth',block:'center'});
+  setTimeout(()=>e.classList.remove('on'), 5000);
+}
+
+// ── Form Submission & Payment ──
+document.getElementById('checkoutForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  
+  const fn=document.getElementById('f1').value.trim();
+  const ln=document.getElementById('f2').value.trim();
+  const em=document.getElementById('f3').value.trim();
+  const ph=document.getElementById('f4').value.trim();
+  const st=document.getElementById('f5').value.trim();
+  const ct=document.getElementById('f6').value.trim();
+  const sv=document.getElementById('f7').value;
+  
+  if(!shpOk){showErr('Please select a shipping option.');document.getElementById('shipBox').scrollIntoView({behavior:'smooth',block:'center'});return;}
+  
+  const btn=document.getElementById('btnPay');
+  btn.disabled=true; btn.innerHTML='<span class="spin"></span> Opening payment...';
+  
+  const tot = (base*qty) + shpP;
+  const addr = `${st}, ${ct}, ${sv}`;
+  const no = [document.getElementById('f9').value, document.getElementById('f8').value, document.getElementById('f10').value].filter(Boolean).join(' | ');
+
+  // SECURITY WARNING: E-commerce Price Manipulation
+  // Do NOT rely on frontend `tot` calculation for production.
+  // Move this Paystack initialization logic to a secure server endpoint where the total is recalculated based on the database price.
+  PaystackPop.setup({
+    key: PK, email: em, amount: tot * 100, currency: 'NGN',
+    metadata: { user_id: usr ? usr.id : 'guest', product: pName, size: sz, qty: qty, shipping: shpP, phone: ph },
+    onClose: function() { btn.disabled=false; btn.textContent='Pay Now →'; },
+    callback: async function(r) {
+      try {
+        const { data: ins, error } = await sb.from('orders').insert([{
+          user_id: usr ? usr.id : null,
+          customer_name: (fn+' '+ln).trim(),
+          customer_email: em, customer_phone: ph,
+          delivery_address: addr,
+          product_name: pName, product_series: pSeries,
+          product_price_ngn: tot,
+          product_price_usd: parseFloat((tot/fx).toFixed(2)),
+          exchange_rate: fx,
+          size: sz, quantity: qty,
+          notes: no || null,
+          status: 'confirmed', payment_status: 'paid',
+          paystack_reference: r.reference
+        }]).select().single();
+        
+        if (error) throw error;
+
+        if (usr && document.getElementById('f9').value) {
+          await sb.from('profiles').update({ fit_notes: document.getElementById('f9').value }).eq('id', usr.id);
+        }
+
+        btn.disabled = false; btn.textContent = 'Pay Now →';
+        document.getElementById('scsNum').textContent = ins?.order_number || ('KORE-'+Date.now());
+        document.getElementById('scs').classList.add('on');
+
+      } catch(e) {
+        showErr('Payment received but order save failed. Please contact KORE via WhatsApp with your payment reference: ' + r.reference);
+        btn.disabled = false; btn.textContent = 'Pay Now →';
+      }
+    }
+  }).openIframe();
+});
+</script>
+</body>
+</html>

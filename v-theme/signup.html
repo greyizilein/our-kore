@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en" data-kore-theme="void" data-mode="dark">
+<head>
+<script src="kore-theme-engine.js"></script>
+<link rel="stylesheet" href="kore-themes.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KORE — Create Account</title>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,300;0,6..96,400;1,6..96,300;1,6..96,400&family=Syne:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--error:#E07070;--success:#70B870;}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);overflow-x:hidden;cursor:none;transition:background .4s,color .4s;min-height:100vh;}
+.grain{position:fixed;inset:0;pointer-events:none;z-index:9990;opacity:.04;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");background-size:256px;}
+
+/* CURSOR */
+.cursor{position:fixed;width:12px;height:12px;background:var(--ink);border-radius:50%;pointer-events:none;z-index:9999;mix-blend-mode:difference;transform:translate(-50%,-50%);transition:width .3s,height .3s;}
+.cursor.big{width:48px;height:48px;}
+@media(pointer:coarse){.cursor{display:none;}}
+
+nav{position:fixed;top:0;width:100%;padding:1.4rem 2.5rem;display:flex;justify-content:space-between;align-items:center;z-index:800;}
+nav::after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,color-mix(in srgb,var(--bg) 85%,transparent),transparent);pointer-events:none;z-index:-1;}
+.nav-logo{font-family:'Bodoni Moda',serif;font-size:1.1rem;letter-spacing:.1em;text-decoration:none;color:var(--ink);padding-left:.42em;}
+.theme-toggle{width:40px;height:22px;border-radius:999px;background:var(--border-v);border:1px solid var(--border-v);position:relative;cursor:none;flex-shrink:0;}
+.theme-toggle-knob{position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:var(--ink);transition:transform .3s cubic-bezier(.34,1.56,.64,1);}
+[data-mode="light"] .theme-toggle-knob{transform:translateX(18px);}
+
+/* STEP SYSTEM */
+.signup-wrap{min-height:100vh;display:flex;align-items:stretch;}
+.signup-left{width:380px;flex-shrink:0;position:sticky;top:0;height:100vh;overflow:hidden;background:var(--surface);}
+@media(max-width:900px){.signup-left{display:none;}}
+.signup-left img{width:100%;height:100%;object-fit:cover;filter:brightness(.5) saturate(.75);}
+.signup-left-overlay{position:absolute;inset:0;background:linear-gradient(180deg,rgba(8,8,10,.3) 0%,rgba(8,8,10,.8) 100%);}
+.signup-left-content{position:absolute;bottom:3rem;left:2.5rem;right:2.5rem;}
+
+/* STEPS INDICATOR */
+.steps-track{display:flex;flex-direction:column;gap:.5rem;margin-bottom:2rem;}
+.step-dot{display:flex;align-items:center;gap:.8rem;opacity:.35;transition:opacity .4s;}
+.step-dot.active{opacity:1;}
+.step-dot.done{opacity:.6;}
+.step-dot-circle{width:28px;height:28px;border-radius:50%;border:1px solid var(--accent);display:flex;align-items:center;justify-content:center;font-size:1.1rem;letter-spacing:.1em;color:var(--accent);flex-shrink:0;transition:background .3s;}
+.step-dot.done .step-dot-circle{background:var(--accent);color:var(--bg);}
+.step-dot-label{font-size:1.15rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ink);}
+.signup-left-quote{font-family:'Bodoni Moda',serif;font-style:italic;font-size:1.1rem;font-weight:300;color:rgba(240,237,230,.7);line-height:1.5;}
+
+/* FORM AREA */
+.signup-right{flex:1;padding:7rem 4rem 4rem;display:flex;flex-direction:column;justify-content:center;}
+@media(max-width:1100px){.signup-right{padding:7rem 2.5rem 4rem;}}
+@media(max-width:600px){.signup-right{padding:6rem 1.5rem 3rem;}}
+
+.step-panel{display:none;}
+.step-panel.active{display:block;animation:fadeIn .4s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+
+.step-eyebrow{font-size:1.1rem;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:1rem;}
+.step-title{font-family:'Bodoni Moda',serif;font-size:clamp(1.8rem,3.5vw,2.8rem);font-weight:300;line-height:.95;margin-bottom:.5rem;}
+.step-title em{font-style:italic;}
+.step-sub{font-size:1.0rem;color:var(--dim);margin-bottom:2.5rem;line-height:1.7;}
+.step-sub a{color:var(--accent);text-decoration:none;border-bottom:1px solid rgba(191,163,120,.3);padding-bottom:1px;}
+
+.form-group{display:flex;flex-direction:column;gap:.4rem;margin-bottom:1.1rem;}
+.form-label{font-size:1.1rem;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);}
+.form-label span{color:var(--accent);margin-left:.2rem;}
+.form-input,.form-select{background:var(--surface);border:1px solid var(--border-v);color:var(--ink);font-family:'Syne',sans-serif;font-size:.82rem;padding:.9rem 1.1rem;width:100%;outline:none;transition:border-color .25s,background .4s;-webkit-appearance:none;}
+.form-input::placeholder{color:rgba(138,135,128,.4);}
+.form-input:focus,.form-select:focus{border-color:var(--accent);}
+.form-select option{background:var(--surface);}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+@media(max-width:500px){.form-row{grid-template-columns:1fr;}}
+.form-hint{font-size:1.1rem;letter-spacing:.1em;color:var(--dim);margin-top:.3rem;line-height:1.6;}
+
+/* SIZE PICKER */
+.size-picker{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.1rem;}
+.size-opt{padding:.5rem 1rem;border:1px solid var(--border-v);font-family:'Syne',sans-serif;font-size:1.15rem;letter-spacing:.04em;text-transform:uppercase;color:var(--dim);cursor:none;background:none;transition:all .2s;}
+.size-opt:hover{border-color:var(--accent);color:var(--ink);}
+.size-opt.sel{background:var(--accent);border-color:var(--accent);color:var(--bg);}
+
+/* PASSWORD STRENGTH */
+.pw-strength{margin-top:.5rem;display:flex;gap:.3rem;}
+.pw-bar{flex:1;height:2px;background:var(--border-v);transition:background .3s;}
+.pw-bar.weak{background:#E07070;}
+.pw-bar.fair{background:#E0B870;}
+.pw-bar.good{background:#70B870;}
+.pw-bar.strong{background:var(--accent);}
+.pw-label{font-size:.84rem;letter-spacing:.04em;text-transform:uppercase;color:var(--dim);margin-top:.3rem;}
+
+/* CTA BUTTONS */
+.btn-next{padding:1.1rem 2.5rem;background:var(--accent);color:var(--bg);border:none;font-family:'Syne',sans-serif;font-size:.94rem;letter-spacing:.12em;text-transform:uppercase;cursor:none;transition:opacity .3s;position:relative;}
+.btn-next:hover{opacity:.8;}
+.btn-next:disabled{opacity:.5;}
+.btn-back{padding:1rem 2rem;background:transparent;color:var(--dim);border:1px solid var(--border-v);font-family:'Syne',sans-serif;font-size:1.15rem;letter-spacing:.12em;text-transform:uppercase;cursor:none;transition:all .3s;margin-right:1rem;}
+.btn-back:hover{color:var(--ink);border-color:var(--accent);}
+.btn-row{display:flex;align-items:center;margin-top:1.5rem;}
+
+.spinner{width:16px;height:16px;border:2px solid rgba(8,8,10,.3);border-top-color:var(--bg);border-radius:50%;animation:spin .7s linear infinite;display:inline-block;vertical-align:middle;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+.auth-global-error{background:rgba(224,112,112,.1);border:1px solid rgba(224,112,112,.3);padding:.8rem 1rem;font-size:.96rem;color:var(--error);margin-bottom:1.2rem;letter-spacing:.08em;display:none;}
+.auth-global-error.shown{display:block;}
+
+/* Progress bar top */
+.progress-bar{position:fixed;top:0;left:0;height:2px;background:var(--accent);transition:width .5s cubic-bezier(.25,.46,.45,.94);z-index:900;}
+
+/* Step 3 — success */
+.success-wrap{text-align:center;padding:2rem 0;}
+.success-icon{font-size:3rem;color:var(--accent);margin-bottom:1.5rem;}
+.success-title{font-family:'Bodoni Moda',serif;font-size:2.5rem;font-weight:300;margin-bottom:.8rem;}
+.success-sub{font-size:1.05rem;color:var(--dim);line-height:1.8;max-width:400px;margin:0 auto 2.5rem;}
+
+/* Divider */
+.divider{display:flex;align-items:center;gap:1rem;margin:.8rem 0 1.2rem;}
+.divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--border-v);}
+.divider span{font-size:.84rem;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);}
+.btn-google{width:100%;padding:1rem;background:transparent;color:var(--ink);border:1px solid var(--border-v);font-family:'Syne',sans-serif;font-size:1.15rem;letter-spacing:.1em;text-transform:uppercase;cursor:none;transition:border-color .3s;display:flex;align-items:center;justify-content:center;gap:.8rem;margin-bottom:1rem;}
+.btn-google:hover{border-color:var(--accent);}
+.btn-google svg{width:16px;height:16px;}
+</style>
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+<div class="cursor" id="cursor"></div>
+<div class="progress-bar" id="progressBar" style="width:33%"></div>
+
+<nav>
+  <a class="nav-logo" href="index.html">KORE</a>
+  <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+    <div class="theme-toggle-knob"></div>
+  </button>
+</nav>
+
+<div class="signup-wrap">
+  <div class="signup-left">
+    <img src="images/Forme 2.png" alt="KORE">
+    <div class="signup-left-overlay"></div>
+    <div class="signup-left-content">
+      <div class="steps-track">
+        <div class="step-dot active" id="sdot1">
+          <div class="step-dot-circle">01</div>
+          <span class="step-dot-label">Account</span>
+        </div>
+        <div class="step-dot" id="sdot2">
+          <div class="step-dot-circle">02</div>
+          <span class="step-dot-label">Identity</span>
+        </div>
+        <div class="step-dot" id="sdot3">
+          <div class="step-dot-circle">03</div>
+          <span class="step-dot-label">Fit Profile</span>
+        </div>
+      </div>
+      <p class="signup-left-quote">"Knowing the body is the beginning of intelligent design."</p>
+    </div>
+  </div>
+
+  <div class="signup-right">
+    <div class="auth-global-error" id="globalError"></div>
+
+    <div class="step-panel active" id="step1">
+      <p class="step-eyebrow">Step 01 of 03</p>
+      <h1 class="step-title">Create <em>Account</em></h1>
+      <p class="step-sub">Already a member? <a href="login.html">Sign in →</a></p>
+
+      <button type="button" class="btn-google" id="btnGoogle">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+        Continue with Google
+      </button>
+
+      <div class="divider"><span>or</span></div>
+
+      <form id="formStep1" novalidate>
+        <div class="form-group">
+          <label class="form-label" for="email">Email Address <span>*</span></label>
+          <input class="form-input" id="email" type="email" placeholder="you@email.com" autocomplete="email" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="password">Password <span>*</span></label>
+          <input class="form-input" id="password" type="password" placeholder="Minimum 8 characters" required>
+          <div class="pw-strength"><div class="pw-bar" id="pb1"></div><div class="pw-bar" id="pb2"></div><div class="pw-bar" id="pb3"></div><div class="pw-bar" id="pb4"></div></div>
+          <p class="pw-label" id="pwLabel">Enter a password</p>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="confirm">Confirm Password <span>*</span></label>
+          <input class="form-input" id="confirm" type="password" placeholder="Repeat password" required>
+        </div>
+        <div class="btn-row">
+          <button type="submit" class="btn-next">Continue →</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="step-panel" id="step2">
+      <p class="step-eyebrow">Step 02 of 03</p>
+      <h2 class="step-title">Your <em>Identity</em></h2>
+      <p class="step-sub">This is how we address you and reach you about your orders.</p>
+
+      <form id="formStep2" novalidate>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="fname">First Name <span>*</span></label>
+            <input class="form-input" id="fname" type="text" placeholder="First name" autocomplete="given-name" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="lname">Last Name <span>*</span></label>
+            <input class="form-input" id="lname" type="text" placeholder="Last name" autocomplete="family-name" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="phone">Phone Number <span>*</span></label>
+          <input class="form-input" id="phone" type="tel" placeholder="+234..." autocomplete="tel" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="city">City / State</label>
+          <input class="form-input" id="city" type="text" placeholder="Lagos, Nigeria">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="howheard">How did you hear about KORE?</label>
+          <select class="form-select" id="howheard">
+            <option value="">Select...</option>
+            <option value="instagram">Instagram</option>
+            <option value="referral">Friend or referral</option>
+            <option value="search">Search / Google</option>
+            <option value="whatsapp">WhatsApp</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="btn-row">
+          <button type="button" class="btn-back" id="backStep2">← Back</button>
+          <button type="submit" class="btn-next">Continue →</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="step-panel" id="step3">
+      <p class="step-eyebrow">Step 03 of 03</p>
+      <h2 class="step-title">Fit <em>Profile</em></h2>
+      <p class="step-sub">Optional but recommended. This lets us make garments that fit you precisely without needing to ask every time.</p>
+
+      <form id="formStep3" novalidate>
+        <div class="form-group">
+          <label class="form-label">Standard Size (closest match)</label>
+          <div class="size-picker">
+            <button type="button" class="size-opt" data-size="XS">XS</button>
+            <button type="button" class="size-opt" data-size="S">S</button>
+            <button type="button" class="size-opt sel" data-size="M">M</button>
+            <button type="button" class="size-opt" data-size="L">L</button>
+            <button type="button" class="size-opt" data-size="XL">XL</button>
+            <button type="button" class="size-opt" data-size="XXL">XXL</button>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="chest">Chest (cm)</label>
+            <input class="form-input" id="chest" type="number" placeholder="e.g. 96">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="waist">Waist (cm)</label>
+            <input class="form-input" id="waist" type="number" placeholder="e.g. 82">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="hips">Hips (cm)</label>
+            <input class="form-input" id="hips" type="number" placeholder="e.g. 98">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="inseam">Inseam (cm)</label>
+            <input class="form-input" id="inseam" type="number" placeholder="e.g. 79">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="shoulder">Shoulder Width (cm)</label>
+            <input class="form-input" id="shoulder" type="number" placeholder="e.g. 44">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="height">Height (cm)</label>
+            <input class="form-input" id="height" type="number" placeholder="e.g. 178">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="fitnotes">Fit Preferences or Notes</label>
+          <input class="form-input" id="fitnotes" type="text" placeholder="e.g. prefer relaxed shoulder, longer hem...">
+        </div>
+
+        <div class="btn-row">
+          <button type="button" class="btn-back" id="backStep3">← Back</button>
+          <button type="submit" class="btn-next" id="btnStep3">
+            <span id="btnStep3Text">Create Account →</span>
+            <span id="btnStep3Loader" style="display:none"><span class="spinner"></span></span>
+          </button>
+        </div>
+        <div style="margin-top:1rem;">
+          <button type="button" id="btnSkipFit" style="background:none;border:none;color:var(--dim);font-family:'Syne',sans-serif;font-size:1.1rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:color .2s;padding:0;text-decoration:underline;text-underline-offset:3px;">Skip for now — add measurements later</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="step-panel" id="stepSuccess">
+      <div class="success-wrap">
+        <div class="success-icon">✦</div>
+        <h2 class="success-title">Welcome to KORE</h2>
+        <p class="success-sub">Your account has been created. We've sent a confirmation to your email. You can now access the full collection, your fit profile, and order history.</p>
+        <a class="btn-next" href="index.html" style="display:inline-block;text-decoration:none;">Enter KORE →</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Secure Configuration ──
+const SU = window.ENV?.SUPABASE_URL || 'YOUR_SUPABASE_URL';
+const SK = window.ENV?.SUPABASE_ANON_KEY || 'YOUR_SUPABASE_ANON_KEY';
+const { createClient } = supabase;
+const sb = createClient(SU, SK);
+
+// Theme Integration
+document.getElementById('themeToggle')?.addEventListener('click', () => {
+  const next = KoreTheme.get().mode === 'dark' ? 'light' : 'dark';
+  KoreTheme.set('mode', next);
+});
+
+// Optimized Cursor
+const cur = document.getElementById('cursor');
+let mx=0, mouseY=0, curX=0, curY=0;
+document.addEventListener('mousemove', e => { mx=e.clientX; mouseY=e.clientY; });
+function animateCursor() {
+  curX += (mx - curX) * 0.2;
+  curY += (mouseY - curY) * 0.2;
+  cur.style.transform = `translate(${curX - 6}px, ${curY - 6}px)`;
+  requestAnimationFrame(animateCursor);
+}
+requestAnimationFrame(animateCursor);
+document.querySelectorAll('a, button, input, select').forEach(el => {
+  el.addEventListener('mouseenter', () => cur.classList.add('big'));
+  el.addEventListener('mouseleave', () => cur.classList.remove('big'));
+});
+
+// State
+let currentStep = 1;
+let selectedSize = 'M';
+let formData = {};
+
+const progress = ['33%','66%','100%'];
+function setStep(n) {
+  document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('step' + n).classList.add('active');
+  document.getElementById('progressBar').style.width = progress[n-1];
+  [1,2,3].forEach(i => {
+    const dot = document.getElementById('sdot' + i);
+    dot.classList.remove('active','done');
+    if(i < n) dot.classList.add('done');
+    if(i === n) dot.classList.add('active');
+  });
+  currentStep = n;
+  window.scrollTo(0,0);
+}
+
+function showError(msg) {
+  const el = document.getElementById('globalError');
+  el.textContent = msg; el.classList.add('shown');
+  el.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+function clearError() { document.getElementById('globalError').classList.remove('shown'); }
+
+// Password strength
+document.getElementById('password').addEventListener('input', function() {
+  const v = this.value;
+  const bars = [document.getElementById('pb1'),document.getElementById('pb2'),document.getElementById('pb3'),document.getElementById('pb4')];
+  const label = document.getElementById('pwLabel');
+  bars.forEach(b => b.className = 'pw-bar');
+  if(v.length === 0) { label.textContent = 'Enter a password'; return; }
+  let score = 0;
+  if(v.length >= 8) score++;
+  if(/[A-Z]/.test(v)) score++;
+  if(/[0-9]/.test(v)) score++;
+  if(/[^A-Za-z0-9]/.test(v)) score++;
+  const levels = ['weak','fair','good','strong'];
+  const labels = ['Weak','Fair','Good','Strong'];
+  for(let i=0;i<score;i++) bars[i].classList.add(levels[Math.min(score-1,3)]);
+  label.textContent = labels[score-1] || 'Weak';
+});
+
+document.querySelectorAll('.size-opt').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.size-opt').forEach(b => b.classList.remove('sel'));
+    btn.classList.add('sel');
+    selectedSize = btn.dataset.size;
+  });
+});
+
+// Forms
+document.getElementById('formStep1').addEventListener('submit', (e) => {
+  e.preventDefault(); clearError();
+  const email = document.getElementById('email').value.trim();
+  const pw = document.getElementById('password').value;
+  const confirm = document.getElementById('confirm').value;
+  if(!email) return showError('Please enter your email address.');
+  if(pw.length < 8) return showError('Password must be at least 8 characters.');
+  if(pw !== confirm) return showError('Passwords do not match.');
+  formData.email = email; formData.password = pw;
+  setStep(2);
+});
+
+document.getElementById('formStep2').addEventListener('submit', (e) => {
+  e.preventDefault(); clearError();
+  const fname = document.getElementById('fname').value.trim();
+  const lname = document.getElementById('lname').value.trim();
+  const phone = document.getElementById('phone').value.trim();
+  if(!fname || !lname) return showError('Please enter your full name.');
+  if(!phone) return showError('Please enter a phone number.');
+  formData.fname = fname; formData.lname = lname; formData.phone = phone;
+  formData.city = document.getElementById('city').value.trim();
+  formData.howheard = document.getElementById('howheard').value;
+  setStep(3);
+});
+
+document.getElementById('backStep2').addEventListener('click', () => setStep(1));
+document.getElementById('backStep3').addEventListener('click', () => setStep(2));
+
+// Creation Handler
+async function createAccount(fitData = {}) {
+  const { data, error } = await sb.auth.signUp({
+    email: formData.email, password: formData.password,
+    options: { data: { full_name: `${formData.fname} ${formData.lname}`, phone: formData.phone } }
+  });
+
+  if(error) return { error };
+
+  const userId = data.user?.id;
+  if(userId) {
+    await new Promise(r => setTimeout(r, 800));
+    await sb.from('profiles').update({
+      first_name: formData.fname, last_name: formData.lname, phone: formData.phone,
+      city: formData.city || null, how_heard: formData.howheard || null, ...fitData,
+    }).eq('id', userId);
+  }
+  return { data };
+}
+
+function showSuccess() {
+  document.getElementById('progressBar').style.width = '100%';
+  document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('stepSuccess').classList.add('active');
+  [1,2,3].forEach(i => {
+    const dot = document.getElementById('sdot' + i);
+    dot.classList.remove('active'); dot.classList.add('done');
+  });
+}
+
+document.getElementById('formStep3').addEventListener('submit', async (e) => {
+  e.preventDefault(); clearError();
+  const btn = document.getElementById('btnStep3');
+  document.getElementById('btnStep3Text').style.display = 'none';
+  document.getElementById('btnStep3Loader').style.display = 'inline';
+  btn.disabled = true;
+
+  const fitData = {
+    fit_size: selectedSize,
+    fit_chest: document.getElementById('chest').value || null,
+    fit_waist: document.getElementById('waist').value || null,
+    fit_hips: document.getElementById('hips').value || null,
+    fit_inseam: document.getElementById('inseam').value || null,
+    fit_shoulder: document.getElementById('shoulder').value || null,
+    fit_height: document.getElementById('height').value || null,
+    fit_notes: document.getElementById('fitnotes').value || null,
+  };
+
+  const { error } = await createAccount(fitData);
+  if(error) {
+    document.getElementById('btnStep3Text').style.display = '';
+    document.getElementById('btnStep3Loader').style.display = 'none';
+    btn.disabled = false;
+    return showError(error.message);
+  }
+  showSuccess();
+});
+
+document.getElementById('btnSkipFit').addEventListener('click', async () => {
+  clearError();
+  const skipBtn = document.getElementById('btnSkipFit');
+  const mainBtn = document.getElementById('btnStep3');
+  skipBtn.textContent = 'Creating account...';
+  skipBtn.disabled = true; mainBtn.disabled = true;
+
+  const { error } = await createAccount();
+  if(error) {
+    skipBtn.textContent = 'Skip for now — add measurements later';
+    skipBtn.disabled = false; mainBtn.disabled = false;
+    return showError(error.message);
+  }
+  showSuccess();
+});
+
+document.getElementById('btnGoogle').addEventListener('click', async () => {
+  await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin + '/index.html' } });
+});
+</script>
+</body>
+</html>

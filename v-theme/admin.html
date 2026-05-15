@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en" data-kore-theme="void" data-mode="dark">
+<head>
+<script src="kore-theme-engine.js"></script>
+<link rel="stylesheet" href="kore-themes.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KORE — Admin Workspace</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+/* ── ADMIN SPECIFIC TOKENS ── */
+:root {
+  --green: #5CB88A;
+  --red: #E07070;
+  --amber: #E0B870;
+  --blue: #70A0E0;
+}
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { min-height: 100vh; display: flex; overflow-x: hidden; } /* Inherits font & bg from kore-themes.css */
+
+/* SIDEBAR */
+.sb { width: 240px; flex-shrink: 0; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; bottom: 0; z-index: 200; transition: transform .35s cubic-bezier(.76,0,.24,1); overflow-y: auto; }
+.sb-logo { padding: 1.6rem 1.5rem 1rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.sb-logo a { font-family: 'Bodoni Moda', serif; font-size: 1.2rem; letter-spacing: .1em; text-decoration: none; color: var(--ink); }
+.sb-logo-sub { font-size: 1.05rem; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); margin-top: .15rem; }
+.sb-close { display: none; background: none; border: none; color: var(--dim); font-size: 1.1rem; cursor: pointer; padding: .2rem; }
+.sb-user { padding: 1.2rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: .8rem; }
+.sb-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 1.05rem; color: var(--bg); font-weight: 600; flex-shrink: 0; }
+.sb-uname { font-size: .96rem; letter-spacing: .06em; line-height: 1.2; }
+.sb-urole { font-size: .80rem; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); }
+.sb-nav { flex: 1; padding: 1rem 0; }
+.sb-sec { padding: .5rem 1.2rem .2rem; font-size: 1.05rem; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); }
+.ni { display: flex; align-items: center; gap: .7rem; padding: .65rem 1.5rem; text-decoration: none; color: var(--dim); font-size: .90rem; letter-spacing: .05em; text-transform: uppercase; transition: color .2s, background .2s; cursor: pointer; border: none; background: none; width: 100%; text-align: left; white-space: nowrap; font-family: 'Syne', sans-serif; }
+.ni:hover, .ni.on { color: var(--ink); background: var(--elevated); }
+.ni.on { border-left: 2px solid var(--accent); color: var(--accent); }
+.ni-ic { font-size: 1.05rem; width: 18px; text-align: center; flex-shrink: 0; }
+.sb-bot { padding: 1rem 1.5rem; border-top: 1px solid var(--border); }
+.btn-so { background: none; border: none; color: var(--dim); font-size: .84rem; letter-spacing: .05em; text-transform: uppercase; cursor: pointer; transition: color .2s; padding: 0; font-family: 'Syne', sans-serif; }
+.btn-so:hover { color: var(--red); }
+.sb-links { display: flex; gap: 1rem; margin-bottom: .7rem; }
+.sb-link { font-size: .82rem; letter-spacing: .05em; text-transform: uppercase; text-decoration: none; color: var(--dim); transition: color .2s; }
+.sb-link:hover { color: var(--accent); }
+
+/* MAIN */
+.main { margin-left: 240px; flex: 1; display: flex; flex-direction: column; min-height: 100vh; min-width: 0; }
+.topbar { height: 60px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 1.8rem; flex-shrink: 0; background: var(--bg); position: sticky; top: 0; z-index: 100; }
+.topbar-left { display: flex; align-items: center; gap: .8rem; }
+.mob-menu-btn { display: none; background: none; border: none; color: var(--dim); font-size: 1.2rem; cursor: pointer; }
+.topbar-title { font-family: 'Bodoni Moda', serif; font-size: 1.05rem; font-weight: 300; }
+.topbar-title em { font-style: italic; color: var(--accent); }
+.topbar-right { display: flex; align-items: center; gap: .8rem; }
+.live-dot-wrap { display: flex; align-items: center; gap: .4rem; font-size: .82rem; letter-spacing: .1em; text-transform: uppercase; color: var(--green); }
+.live-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--green); animation: pulse 2s ease-in-out infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+.btn-sm { background: var(--accent); color: var(--bg); border: none; font-family: 'Syne', sans-serif; font-size: .82rem; letter-spacing: .1em; text-transform: uppercase; padding: .45rem .9rem; cursor: pointer; transition: background .2s; }
+.btn-sm:hover { background: var(--ink); color: var(--bg); }
+.btn-sm.outline { background: none; border: 1px solid var(--border-v); color: var(--dim); }
+.btn-sm.outline:hover { border-color: var(--accent); color: var(--accent); background: none; }
+
+/* THEME TOGGLE */
+.theme-toggle { width: 40px; height: 22px; border-radius: 999px; background: var(--border-v); border: 1px solid var(--border-v); position: relative; cursor: pointer; flex-shrink: 0; transition: background .3s; }
+.theme-toggle-knob { position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--ink); transition: transform .3s cubic-bezier(.34,1.56,.64,1); }
+[data-mode="light"] .theme-toggle-knob { transform: translateX(18px); }
+
+/* CONTENT & PANELS */
+.content { flex: 1; padding: 1.8rem; }
+.panel { display: none; }
+.panel.on { display: block; animation: pIn .3s ease; }
+@keyframes pIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+/* SECTION HEAD */
+.sh { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.2rem; padding-bottom: .8rem; border-bottom: 1px solid var(--border); }
+.sh-t { font-size: .90rem; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); }
+.sh-r { display: flex; align-items: center; gap: .6rem; }
+
+/* GRID STATS */
+.sg { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); margin-bottom: 2px; }
+@media(max-width:900px){ .sg { grid-template-columns: repeat(2, 1fr); } }
+@media(max-width:480px){ .sg { grid-template-columns: 1fr 1fr; } }
+.sc { background: var(--surface); padding: 1.3rem; transition: background .2s; }
+.sc:hover { background: var(--elevated); }
+.sl { font-size: .82rem; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); margin-bottom: .5rem; }
+.sv { font-family: 'Bodoni Moda', serif; font-size: 1.8rem; font-weight: 300; line-height: 1; }
+.sv em { font-style: italic; color: var(--accent); }
+
+/* TABLES */
+.tw { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+table { width: 100%; border-collapse: collapse; min-width: 600px; }
+th { font-size: .80rem; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); padding: .65rem 1rem; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+td { font-size: 1.0rem; padding: .8rem 1rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+tr:hover td { background: var(--surface); }
+.on { font-family: 'Bodoni Moda', serif; font-size: .82rem; letter-spacing: .04em; }
+.sp { display: inline-flex; align-items: center; gap: .3rem; padding: .22rem .65rem; font-size: 1.05rem; letter-spacing: .08em; text-transform: uppercase; }
+.sp.pending { background: rgba(224,184,112,.12); color: var(--amber); }
+.sp.confirmed { background: rgba(92,184,138,.12); color: var(--green); }
+.sp.in_production { background: rgba(112,160,224,.12); color: var(--blue); }
+.sp.quality_check { background: rgba(191,163,120,.12); color: var(--accent); }
+.sp.shipped { background: rgba(92,184,138,.2); color: var(--green); }
+.sp.delivered { background: rgba(92,184,138,.3); color: var(--green); }
+.sp.cancelled { background: rgba(224,112,112,.12); color: var(--red); }
+.pp.paid { color: var(--green); font-size: .80rem; letter-spacing: .05em; text-transform: uppercase; }
+.pp.unpaid { color: var(--red); font-size: .80rem; letter-spacing: .05em; text-transform: uppercase; }
+
+/* BUTTONS & INPUTS */
+.ab { background: none; border: 1px solid var(--border-v); color: var(--dim); font-family: 'Syne', sans-serif; font-size: 1.05rem; letter-spacing: .05em; text-transform: uppercase; padding: .28rem .65rem; cursor: pointer; transition: all .2s; }
+.ab:hover { border-color: var(--accent); color: var(--accent); }
+.ab.red:hover { border-color: var(--red); color: var(--red); }
+.ss { background: var(--surface); border: 1px solid var(--border-v); color: var(--ink); font-family: 'Syne', sans-serif; font-size: .82rem; padding: .3rem .6rem; outline: none; cursor: pointer; }
+.ss:focus { border-color: var(--accent); }
+.ua { width: 26px; height: 26px; border-radius: 50%; background: var(--elevated); display: inline-flex; align-items: center; justify-content: center; font-size: .84rem; color: var(--dim); flex-shrink: 0; }
+
+.tp.free { color: var(--dim); font-size: .80rem; letter-spacing: .05em; text-transform: uppercase; }
+.tp.member { color: var(--accent); font-size: .80rem; letter-spacing: .05em; text-transform: uppercase; }
+.tp.vip { color: var(--green); font-size: .80rem; letter-spacing: .05em; text-transform: uppercase; }
+
+/* PRODUCT UPLOAD & GRID */
+.prod-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--border); margin-bottom: 1.5rem; }
+@media(max-width:800px) { .prod-grid { grid-template-columns: 1fr 1fr; } }
+@media(max-width:480px) { .prod-grid { grid-template-columns: 1fr; } }
+.prod-card { background: var(--bg); position: relative; cursor: pointer; }
+.prod-card:hover { background: var(--surface); }
+.prod-img-wrap { aspect-ratio: 3/4; overflow: hidden; background: var(--elevated); position: relative; }
+.prod-img-wrap img { width: 100%; height: 100%; object-fit: cover; }
+.prod-badge { position: absolute; top: .5rem; left: .5rem; font-size: 1.05rem; letter-spacing: .1em; text-transform: uppercase; padding: .2rem .5rem; }
+.prod-badge.live { background: rgba(92,184,138,.15); color: var(--green); }
+.prod-info { padding: .9rem; }
+.prod-series { font-size: 1.05rem; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); margin-bottom: .15rem; }
+.prod-name { font-family: 'Bodoni Moda', serif; font-size: 1.15rem; margin-bottom: .15rem; }
+.prod-overlay { position: absolute; inset: 0; background: rgba(8,8,10,.6); display: flex; align-items: center; justify-content: center; gap: .5rem; opacity: 0; transition: opacity .2s; }
+.prod-card:hover .prod-overlay { opacity: 1; }
+
+.upload-form { background: var(--surface); border: 1px solid var(--border); padding: 1.8rem; margin-bottom: 1.5rem; }
+.uf-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.uf-s2 { grid-column: 1/-1; }
+.uf-l { font-size: .82rem; letter-spacing: .1em; text-transform: uppercase; color: var(--dim); margin-bottom: .35rem; display: block; }
+.uf-i, .uf-sl, .uf-ta { background: var(--bg); border: 1px solid var(--border-v); color: var(--ink); font-family: 'Syne', sans-serif; font-size: 1.05rem; padding: .75rem .9rem; width: 100%; outline: none; transition: border-color .25s; }
+.uf-i:focus, .uf-sl:focus, .uf-ta:focus { border-color: var(--accent); }
+.img-drop { border: 1px dashed var(--border-v); padding: 2rem; text-align: center; cursor: pointer; transition: border-color .2s; position: relative; background: var(--bg); }
+.img-drop:hover { border-color: var(--accent); }
+
+/* DRAWERS & MODALS */
+.modal { position: fixed; inset: 0; z-index: 8000; background: rgba(8,8,10,.85); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; padding: 1rem; }
+.modal.on { display: flex; }
+.mbox { background: var(--surface); border: 1px solid var(--border-v); padding: 2rem; width: min(500px, 100%); max-height: 90vh; overflow-y: auto; }
+.drawer { position: fixed; right: 0; top: 0; bottom: 0; width: min(520px, 100vw); background: var(--surface); border-left: 1px solid var(--border-v); z-index: 300; transform: translateX(100%); transition: transform .4s cubic-bezier(.76,0,.24,1); overflow-y: auto; }
+.drawer.on { transform: translateX(0); }
+.dr-head { padding: 1.4rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: var(--surface); z-index: 10; }
+.dr-row { display: flex; justify-content: space-between; align-items: flex-start; padding: .55rem 0; border-bottom: 1px solid var(--border); }
+
+/* UTILS */
+.ld { text-align: center; padding: 2.5rem; color: var(--dim); font-size: .94rem; letter-spacing: .12em; }
+.spin { width: 18px; height: 18px; border: 2px solid var(--border-v); border-top-color: var(--accent); border-radius: 50%; animation: sp .7s linear infinite; display: inline-block; vertical-align: middle; margin-right: .4rem; }
+@keyframes sp { to { transform: rotate(360deg); } }
+.toast { position: fixed; bottom: 2rem; right: 2rem; background: var(--elevated); border: 1px solid var(--border-v); padding: .8rem 1.4rem; font-size: .94rem; z-index: 9000; transform: translateY(20px); opacity: 0; transition: all .3s; pointer-events: none; }
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast.success { border-color: rgba(92,184,138,.4); color: var(--green); }
+.toast.error { border-color: rgba(224,112,112,.4); color: var(--red); }
+</style>
+</head>
+<body>
+<div class="sb-overlay" id="sbOverlay" onclick="closeSb()" style="display:none;position:fixed;inset:0;z-index:199;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);"></div>
+<div class="toast" id="toast"></div>
+
+<aside class="sb" id="sb">
+  <div class="sb-logo">
+    <div>
+      <a href="index.html">KORE</a>
+      <p class="sb-logo-sub">Admin</p>
+    </div>
+    <button class="sb-close" onclick="closeSb()">&#10005;</button>
+  </div>
+  <div class="sb-user">
+    <div class="sb-avatar" id="sbAvatar">A</div>
+    <div><p class="sb-uname" id="sbName">Admin</p><p class="sb-urole">Owner</p></div>
+  </div>
+  <nav class="sb-nav">
+    <p class="sb-sec">Overview</p>
+    <button class="ni on" onclick="goPanel('overview')"><span class="ni-ic">◈</span>Overview</button>
+    <p class="sb-sec">Store</p>
+    <button class="ni" onclick="goPanel('products')"><span class="ni-ic">◻</span>Products</button>
+    <button class="ni" onclick="goPanel('orders')"><span class="ni-ic">◎</span>Orders</button>
+    <p class="sb-sec">People</p>
+    <button class="ni" onclick="goPanel('users')"><span class="ni-ic">◯</span>Users</button>
+    <p class="sb-sec">Intelligence</p>
+    <button class="ni" onclick="goPanel('revenue')"><span class="ni-ic">◑</span>Revenue</button>
+    <p class="sb-sec">Admin</p>
+    <button class="ni" onclick="goPanel('settings')"><span class="ni-ic">⚙</span>Settings</button>
+  </nav>
+  <div class="sb-bot">
+    <button class="btn-so" onclick="doSignOut()">Sign Out</button>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="mob-menu-btn" onclick="openSb()">&#9776;</button>
+      <h1 class="topbar-title" id="topTitle">KORE <em>Admin</em></h1>
+    </div>
+    <div class="topbar-right">
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+        <div class="theme-toggle-knob"></div>
+      </button>
+      <div class="live-dot-wrap"><div class="live-dot"></div>Live</div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <div class="panel on" id="panel-overview">
+      <div class="sg" id="statsGrid">
+        <div class="sc"><p class="sl">Total Orders</p><div class="sv" id="stOrd">—</div></div>
+        <div class="sc"><p class="sl">Revenue (USD)</p><div class="sv" id="stRev">—</div></div>
+        <div class="sc"><p class="sl">Members</p><div class="sv" id="stMem">—</div></div>
+        <div class="sc"><p class="sl">Pending</p><div class="sv" id="stPend">—</div></div>
+      </div>
+      <div class="sh"><p class="sh-t">Recent Orders</p></div>
+      <div class="tw"><table><thead><tr><th>Order</th><th>Customer</th><th>Product</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead><tbody id="recOrdBody"><tr><td colspan="6" class="ld"><span class="spin"></span>Loading...</td></tr></tbody></table></div>
+    </div>
+
+    <div class="panel" id="panel-products">
+      <div class="sh">
+        <p class="sh-t">Collection — Products</p>
+        <div class="sh-r">
+          <button class="btn-sm" onclick="showUploadForm()">+ Add Product</button>
+        </div>
+      </div>
+
+      <div class="upload-form" id="uploadForm" style="display:none;">
+        <h2 class="mt" style="margin-bottom:.3rem;" id="ufTitle">Add <em>Product</em></h2>
+        <input type="hidden" id="ufId">
+        <div class="uf-grid">
+          <div class="fg"><label class="uf-l">Series *</label><input class="uf-i" id="ufSeries" placeholder="e.g. Forme"></div>
+          <div class="fg"><label class="uf-l">Name *</label><input class="uf-i" id="ufName" placeholder="e.g. Cotton Shirt / I"></div>
+          <div class="fg"><label class="uf-l">Price (₦) *</label><input class="uf-i" id="ufPrice" type="number"></div>
+          <div class="fg"><label class="uf-l">Status</label><select class="uf-sl" id="ufStatus"><option value="live">Live</option><option value="draft">Draft</option></select></div>
+        </div>
+        <div style="display:flex;gap:.7rem;margin-top:1.2rem;">
+          <button class="btn-sm" id="ufSubmitBtn" onclick="submitProduct()">Save Product →</button>
+          <button class="btn-sm outline" onclick="hideUploadForm()">Cancel</button>
+        </div>
+      </div>
+
+      <div class="prod-grid" id="prodGrid"><div class="ld" style="grid-column:1/-1"><span class="spin"></span>Loading...</div></div>
+    </div>
+
+    <div class="panel" id="panel-orders">
+      <div class="sh"><p class="sh-t">All Orders</p></div>
+      <div class="tw"><table><thead><tr><th>Order #</th><th>Customer</th><th>Product</th><th>Size</th><th>Status</th><th>Date</th><th></th></tr></thead><tbody id="ordBody"><tr><td colspan="7" class="ld"><span class="spin"></span>Loading...</td></tr></tbody></table></div>
+    </div>
+
+    <div class="panel" id="panel-users">
+      <div class="sh"><p class="sh-t">All Members</p></div>
+      <div class="tw"><table><thead><tr><th>User</th><th>Email</th><th>Tier</th><th>Joined</th></tr></thead><tbody id="usersBody"><tr><td colspan="4" class="ld"><span class="spin"></span>Loading...</td></tr></tbody></table></div>
+    </div>
+
+    <div class="panel" id="panel-revenue">
+      <div class="sg" style="margin-bottom:1.5rem;">
+        <div class="sc"><p class="sl">Total Revenue</p><div class="sv" id="revTotal">—</div></div>
+        <div class="sc"><p class="sl">Orders Count</p><div class="sv" id="revCount">—</div></div>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-settings">
+      <div class="sh"><p class="sh-t">Admin Settings</p></div>
+      <div style="background:var(--surface);border:1px solid var(--border);padding:1.5rem;">
+        <p style="font-size:.82rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:1rem;">Danger Zone</p>
+        <p style="font-size:.86rem;color:var(--dim);margin-bottom:1rem;">Warning: Ensure Supabase Row Level Security (RLS) is strictly restricted to Admin roles before exporting data.</p>
+        <button class="btn-sm outline" onclick="exportAllData()" style="color:var(--red);border-color:var(--red);">Export All Database Data →</button>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script>
+// ── Secure Configuration ──
+// NEVER HARDCODE Supabase keys in frontend files.
+const SU = window.ENV?.SUPABASE_URL || 'YOUR_SUPABASE_URL';
+const SK = window.ENV?.SUPABASE_ANON_KEY || 'YOUR_SUPABASE_ANON_KEY';
+const sb = supabase.createClient(SU, SK);
+let admin = null;
+
+// ── Theme Engine Integration ──
+document.getElementById('themeToggle')?.addEventListener('click', () => {
+  const next = KoreTheme.get().mode === 'dark' ? 'light' : 'dark';
+  KoreTheme.set('mode', next);
+});
+
+// ── Auth Check ──
+(async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  if(!session) { location.href = 'login.html'; return; }
+  
+  const { data: p } = await sb.from('profiles').select('*').eq('id', session.user.id).single();
+  if(!p || p.role !== 'admin') { alert('Admin access only.'); await sb.auth.signOut(); location.href = 'login.html'; return; }
+  admin = p;
+  
+  document.getElementById('sbName').textContent = p.first_name || p.email;
+  document.getElementById('sbAvatar').textContent = (p.first_name?.[0] || p.email[0]).toUpperCase();
+  
+  loadStats();
+})();
+
+// ── Navigation ──
+const panelTitles = { overview: 'KORE <em>Admin</em>', products: '<em>Products</em>', orders: '<em>Orders</em>', users: '<em>Members</em>', revenue: '<em>Revenue</em>', settings: '<em>Settings</em>' };
+function goPanel(n) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('on'));
+  document.querySelectorAll('.ni').forEach(b => b.classList.remove('on'));
+  document.getElementById('panel-' + n).classList.add('on');
+  document.querySelector(`.ni[onclick="goPanel('${n}')"]`)?.classList.add('on');
+  document.getElementById('topTitle').innerHTML = panelTitles[n];
+  if(n === 'products') loadProducts();
+  if(n === 'orders') loadOrders();
+  if(n === 'users') loadUsers();
+  if(n === 'revenue') loadRevenue();
+}
+
+function openSb() { document.getElementById('sb').classList.add('open'); document.getElementById('sbOverlay').style.display = 'block'; }
+function closeSb() { document.getElementById('sb').classList.remove('open'); document.getElementById('sbOverlay').style.display = 'none'; }
+function toast(msg, type='success') { const t = document.getElementById('toast'); t.textContent = msg; t.className = `toast ${type} show`; setTimeout(() => t.className = 'toast', 3500); }
+async function doSignOut() { await sb.auth.signOut(); location.href = 'login.html'; }
+
+// ── Overview Data ──
+async function loadStats() {
+  try {
+    const [ord, pnd, mem] = await Promise.all([
+      sb.from('orders').select('id', { count: 'exact', head: true }),
+      sb.from('orders').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+      sb.from('profiles').select('id', { count: 'exact', head: true }).neq('subscription_tier', 'free')
+    ]);
+    document.getElementById('stOrd').innerHTML = `<em>${ord.count || 0}</em>`;
+    document.getElementById('stPend').innerHTML = `<em>${pnd.count || 0}</em>`;
+    document.getElementById('stMem').innerHTML = `<em>${mem.count || 0}</em>`;
+  } catch (e) { console.error(e); }
+}
+
+// ── Products ──
+function showUploadForm() { document.getElementById('uploadForm').style.display = 'block'; }
+function hideUploadForm() { document.getElementById('uploadForm').style.display = 'none'; }
+async function loadProducts() {
+  const { data } = await sb.from('products').select('*').order('sort_order', { ascending: true });
+  const grid = document.getElementById('prodGrid');
+  if(!data?.length) { grid.innerHTML = '<div class="ld" style="grid-column:1/-1">No products found.</div>'; return; }
+  grid.innerHTML = data.map(p => `
+    <div class="prod-card">
+      <div class="prod-info">
+        <span class="prod-badge ${p.status}">${p.status}</span>
+        <p class="prod-series">${p.series}</p>
+        <p class="prod-name">${p.name}</p>
+        <p style="color:var(--dim)">₦${Number(p.price_ngn).toLocaleString()}</p>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── Orders ──
+async function loadOrders() {
+  const { data } = await sb.from('orders').select('*').order('created_at', { ascending: false });
+  const b = document.getElementById('ordBody');
+  if(!data?.length) { b.innerHTML = '<tr><td colspan="7" class="ld">No orders.</td></tr>'; return; }
+  b.innerHTML = data.map(o => `<tr>
+    <td><span class="on">${o.order_number}</span></td>
+    <td>${o.customer_name}</td>
+    <td>${o.product_name}</td>
+    <td>${o.size || '—'}</td>
+    <td><span class="sp ${o.status}">${o.status}</span></td>
+    <td style="color:var(--dim);">${new Date(o.created_at).toLocaleDateString()}</td>
+    <td><button class="ab">View</button></td>
+  </tr>`).join('');
+}
+
+// ── Users ──
+async function loadUsers() {
+  const { data } = await sb.from('profiles').select('*').order('created_at', { ascending: false });
+  const b = document.getElementById('usersBody');
+  if(!data?.length) { b.innerHTML = '<tr><td colspan="4" class="ld">No users.</td></tr>'; return; }
+  b.innerHTML = data.map(u => `<tr>
+    <td>${u.first_name || 'User'} ${u.last_name || ''}</td>
+    <td style="color:var(--dim);">${u.email}</td>
+    <td><span class="tp ${u.subscription_tier}">${u.subscription_tier}</span></td>
+    <td style="color:var(--dim);">${new Date(u.created_at).toLocaleDateString()}</td>
+  </tr>`).join('');
+}
+
+// ── Revenue ──
+async function loadRevenue() {
+  const { data } = await sb.from('orders').select('*').eq('payment_status', 'paid');
+  const total = (data || []).reduce((s, o) => s + Number(o.product_price_usd), 0);
+  document.getElementById('revTotal').innerHTML = `<em>$${total.toFixed(0)}</em>`;
+  document.getElementById('revCount').innerHTML = `<em>${data?.length || 0}</em>`;
+}
+
+// ── Danger Zone ──
+async function exportAllData() {
+  if(!confirm("SECURITY WARNING: You are about to export raw user data to your local machine. Are you sure you want to proceed?")) return;
+  
+  try {
+    const [orders, users, products] = await Promise.all([
+      sb.from('orders').select('*'),
+      sb.from('profiles').select('*'),
+      sb.from('products').select('*')
+    ]);
+    const blob = new Blob([JSON.stringify({ orders: orders.data, users: users.data, products: products.data, exported_at: new Date().toISOString() }, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'KORE-Export.json'; a.click();
+    toast('Data exported securely.', 'success');
+  } catch (err) {
+    toast('Export failed. Ensure Admin RLS is configured.', 'error');
+  }
+}
+</script>
+</body>
+</html>

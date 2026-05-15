@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en" data-kore-theme="void" data-mode="dark">
+<head>
+<script src="kore-theme-engine.js"></script>
+<link rel="stylesheet" href="kore-themes.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KORE — Membership</title>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,300;0,6..96,400;1,6..96,300;1,6..96,400&family=Syne:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://js.paystack.co/v1/inline.js"></script>
+<style>
+:root{--green:#5CB88A;--red:#E07070;}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;cursor:none;transition:background .4s,color .4s;overflow-x:hidden;}
+
+/* GRAIN */
+.grain{position:fixed;inset:0;pointer-events:none;z-index:9990;opacity:.035;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");background-size:256px;}
+
+/* CURSOR */
+.cur{position:fixed;width:12px;height:12px;background:var(--ink);border-radius:50%;pointer-events:none;z-index:9999;mix-blend-mode:difference;transform:translate(-50%,-50%);transition:width .3s,height .3s;}
+.cur.big{width:48px;height:48px;}
+@media(pointer:coarse){.cur{display:none;}}
+
+/* NAV */
+nav{position:fixed;top:0;width:100%;padding:1.2rem 2.5rem;display:flex;justify-content:space-between;align-items:center;z-index:800;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);}
+.nav-logo{font-family:'Bodoni Moda',serif;font-size:1rem;letter-spacing:.42em;text-decoration:none;color:var(--ink);padding-left:.42em;}
+.nav-right{display:flex;align-items:center;gap:1rem;}
+.nav-back{font-size:.68rem;letter-spacing:.2em;text-transform:uppercase;text-decoration:none;color:var(--dim);transition:color .2s;}
+.nav-back:hover{color:var(--accent);}
+.theme-toggle{width:40px;height:22px;border-radius:999px;background:var(--border-v);border:1px solid var(--border-v);position:relative;cursor:pointer;flex-shrink:0;}
+.theme-toggle-knob{position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:var(--ink);transition:transform .3s cubic-bezier(.34,1.56,.64,1);}
+[data-mode="light"] .theme-toggle-knob{transform:translateX(18px);}
+
+/* ── HERO ── */
+.hero{padding:8rem 2rem 4rem;text-align:center;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(196,164,107,.08) 0%,transparent 65%);pointer-events:none;}
+.hero-eye{font-size:.68rem;letter-spacing:.4em;text-transform:uppercase;color:var(--accent);margin-bottom:1rem;}
+.hero-title{font-family:'Bodoni Moda',serif;font-size:clamp(2.8rem,6vw,5.5rem);font-weight:300;line-height:.9;margin-bottom:1.5rem;}
+.hero-title em{font-style:italic;color:var(--accent);}
+.hero-sub{font-size:1rem;color:var(--dim);line-height:1.8;max-width:520px;margin:0 auto 2.5rem;}
+.current-badge{display:inline-flex;align-items:center;gap:.5rem;background:color-mix(in srgb,var(--accent) 12%,transparent);border:1px solid color-mix(in srgb,var(--accent) 25%,transparent);padding:.45rem 1.1rem;border-radius:999px;font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);}
+.current-badge .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 2s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+
+/* ── BILLING TOGGLE ── */
+.billing-toggle{display:flex;align-items:center;justify-content:center;gap:1rem;margin:3rem 0 2rem;}
+.bt-label{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);transition:color .2s;}
+.bt-label.on{color:var(--ink);}
+.bt-switch{width:52px;height:28px;border-radius:999px;background:var(--accent);border:none;position:relative;cursor:pointer;transition:background .3s;}
+.bt-knob{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:var(--bg);transition:transform .3s cubic-bezier(.34,1.56,.64,1);}
+.bt-switch.yearly .bt-knob{transform:translateX(24px);}
+.save-badge{background:var(--green);color:var(--bg);font-size:.56rem;letter-spacing:.16em;text-transform:uppercase;padding:.2rem .6rem;border-radius:999px;font-weight:600;}
+
+/* ── PLANS GRID ── */
+.plans-wrap{max-width:1100px;margin:0 auto;padding:0 1.5rem 6rem;}
+.plans-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.5rem;}
+@media(max-width:900px){.plans-grid{grid-template-columns:1fr;max-width:480px;margin:0 auto;}}
+
+/* Plan card */
+.plan-card{
+  background:var(--surface);border:1px solid var(--border);
+  padding:2rem;position:relative;overflow:hidden;
+  transition:border-color .3s,transform .3s;
+  display:flex;flex-direction:column;
+}
+.plan-card:hover{border-color:var(--accent);transform:translateY(-3px);}
+.plan-card.featured{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 5%,var(--surface));}
+.plan-card.featured::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);}
+
+/* Featured glow */
+.plan-card.featured::after{content:'';position:absolute;top:-60px;left:50%;transform:translateX(-50%);width:200px;height:200px;background:radial-gradient(circle,rgba(196,164,107,.08),transparent 70%);pointer-events:none;}
+
+.plan-badge{position:absolute;top:1.2rem;right:1.2rem;font-size:.52rem;letter-spacing:.2em;text-transform:uppercase;padding:.25rem .7rem;border-radius:999px;}
+.plan-badge.pop{background:var(--accent);color:var(--bg);font-weight:600;}
+.plan-badge.curr{background:rgba(92,184,138,.15);color:var(--green);border:1px solid rgba(92,184,138,.3);}
+
+.plan-tier{font-size:.6rem;letter-spacing:.35em;text-transform:uppercase;color:var(--dim);margin-bottom:.6rem;}
+.plan-name{font-family:'Bodoni Moda',serif;font-size:2rem;font-weight:300;margin-bottom:.3rem;}
+.plan-name em{font-style:italic;color:var(--accent);}
+.plan-tagline{font-size:.78rem;color:var(--dim);line-height:1.6;margin-bottom:1.5rem;}
+
+.plan-price-wrap{margin-bottom:1.5rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border);}
+.plan-price{font-family:'Bodoni Moda',serif;font-size:3rem;font-weight:300;line-height:1;}
+.plan-price em{font-style:italic;color:var(--accent);}
+.plan-price-unit{font-size:.72rem;color:var(--dim);letter-spacing:.12em;margin-top:.3rem;}
+.plan-price-ngn{font-size:.8rem;color:var(--dim);margin-top:.2rem;}
+.plan-price-annual{font-size:.68rem;color:var(--green);margin-top:.3rem;}
+
+/* Features list */
+.plan-features{flex:1;list-style:none;display:flex;flex-direction:column;gap:.55rem;margin-bottom:2rem;}
+.plan-features li{display:flex;align-items:flex-start;gap:.65rem;font-size:.82rem;line-height:1.5;}
+.plan-features li .fi{font-size:.75rem;flex-shrink:0;margin-top:.1rem;}
+.fi.yes{color:var(--green);}
+.fi.no{color:var(--dim);opacity:.4;}
+.fi.star{color:var(--accent);}
+
+/* CTA button */
+.plan-cta{
+  padding:1rem;border:none;font-family:'Syne',sans-serif;font-size:.72rem;letter-spacing:.25em;text-transform:uppercase;cursor:pointer;
+  transition:all .25s;width:100%;border-radius:0;
+}
+.plan-cta.solid{background:var(--accent);color:var(--bg);}
+.plan-cta.solid:hover{opacity:.8;}
+.plan-cta.outline{background:transparent;border:1px solid var(--border-v);color:var(--dim);}
+.plan-cta.outline:hover{border-color:var(--accent);color:var(--accent);}
+.plan-cta.current{background:transparent;border:1px solid rgba(92,184,138,.3);color:var(--green);}
+.plan-cta:disabled{opacity:.5;cursor:not-allowed;}
+
+/* ── COMPARISON TABLE ── */
+.compare-section{max-width:900px;margin:0 auto 6rem;padding:0 1.5rem;}
+.compare-title{font-family:'Bodoni Moda',serif;font-size:clamp(1.6rem,3vw,2.5rem);font-weight:300;text-align:center;margin-bottom:.5rem;}
+.compare-title em{font-style:italic;color:var(--accent);}
+.compare-sub{font-size:.82rem;color:var(--dim);text-align:center;margin-bottom:2.5rem;}
+.compare-table{width:100%;border-collapse:collapse;}
+.compare-table th{padding:.9rem 1rem;font-size:.6rem;letter-spacing:.25em;text-transform:uppercase;color:var(--dim);text-align:center;border-bottom:1px solid var(--border);}
+.compare-table th:first-child{text-align:left;}
+.compare-table td{padding:.85rem 1rem;font-size:.82rem;border-bottom:1px solid var(--border);text-align:center;vertical-align:middle;}
+.compare-table td:first-child{text-align:left;color:var(--dim);font-size:.78rem;letter-spacing:.06em;}
+.compare-table tr:hover td{background:var(--surface);}
+.compare-table th.hl,.compare-table td.hl{background:color-mix(in srgb,var(--accent) 5%,transparent);}
+.ck{color:var(--green);font-size:1rem;}
+.cx{color:var(--dim);opacity:.35;font-size:1rem;}
+.ct{color:var(--accent);font-size:.78rem;letter-spacing:.08em;}
+
+/* ── FAQ ── */
+.faq-section{max-width:680px;margin:0 auto 6rem;padding:0 1.5rem;}
+.faq-title{font-family:'Bodoni Moda',serif;font-size:clamp(1.6rem,3vw,2.5rem);font-weight:300;text-align:center;margin-bottom:.5rem;}
+.faq-title em{font-style:italic;color:var(--accent);}
+.faq-sub{font-size:.82rem;color:var(--dim);text-align:center;margin-bottom:2.5rem;}
+.faq-item{border-bottom:1px solid var(--border);}
+.faq-q{width:100%;background:none;border:none;color:var(--ink);font-family:'Syne',sans-serif;font-size:.88rem;letter-spacing:.04em;padding:1.2rem 0;text-align:left;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:1rem;transition:color .2s;}
+.faq-q:hover{color:var(--accent);}
+.faq-arrow{font-size:.9rem;color:var(--accent);transition:transform .3s;flex-shrink:0;}
+.faq-item.open .faq-arrow{transform:rotate(45deg);}
+.faq-a{max-height:0;overflow:hidden;transition:max-height .4s ease;}
+.faq-item.open .faq-a{max-height:300px;}
+.faq-a-inner{font-size:.82rem;color:var(--dim);line-height:1.9;padding-bottom:1.2rem;}
+.faq-a-inner a{color:var(--accent);text-decoration:none;}
+
+/* ── CURRENT PLAN BANNER ── */
+.current-plan-banner{background:color-mix(in srgb,var(--accent) 6%,var(--surface));border:1px solid color-mix(in srgb,var(--accent) 20%,transparent);padding:1.2rem 2rem;text-align:center;margin:2rem auto 0;max-width:600px;display:none;}
+.current-plan-banner.show{display:block;}
+.cpb-label{font-size:.6rem;letter-spacing:.3em;text-transform:uppercase;color:var(--accent);margin-bottom:.3rem;}
+.cpb-name{font-family:'Bodoni Moda',serif;font-size:1.4rem;font-weight:300;}
+.cpb-detail{font-size:.78rem;color:var(--dim);margin-top:.3rem;}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:2rem;right:2rem;background:var(--surface);border:1px solid var(--border-v);padding:.85rem 1.5rem;font-size:.78rem;letter-spacing:.08em;z-index:9000;transform:translateY(20px);opacity:0;transition:all .3s;pointer-events:none;border-radius:0;}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast.ok{border-color:rgba(92,184,138,.4);color:var(--green);}
+.toast.err{border-color:rgba(224,112,112,.4);color:var(--red);}
+
+/* SPINNER */
+.spin{width:14px;height:14px;border:2px solid rgba(8,8,10,.3);border-top-color:var(--bg);border-radius:50%;animation:sp .6s linear infinite;display:inline-block;vertical-align:middle;margin-right:.4rem;}
+@keyframes sp{to{transform:rotate(360deg);}}
+
+/* ── MOBILE ── */
+@media(max-width:480px){
+  nav{padding:1rem 1.2rem;}
+  .hero{padding:6rem 1.2rem 3rem;}
+  .hero-title{font-size:clamp(2.4rem,10vw,3.5rem);}
+  .hero-sub{font-size:.88rem;}
+  .plans-wrap{padding:0 1rem 4rem;}
+  .plan-card{padding:1.5rem;}
+  .plan-name{font-size:1.6rem;}
+  .plan-price{font-size:2.4rem;}
+  .plan-features li{font-size:.85rem;}
+  .compare-section,.faq-section{padding:0 1rem;}
+  .compare-table td,.compare-table th{padding:.7rem .5rem;font-size:.72rem;}
+}
+</style>
+</head>
+<body>
+<div class="grain"></div>
+<div class="cur" id="cur"></div>
+<div class="toast" id="toast"></div>
+
+<nav>
+  <a class="nav-logo" href="index.html">KORE</a>
+  <div class="nav-right">
+    <a class="nav-back" href="index.html">&#8592; Back</a>
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+      <div class="theme-toggle-knob"></div>
+    </button>
+  </div>
+</nav>
+
+<section class="hero">
+  <p class="hero-eye">Membership</p>
+  <h1 class="hero-title">Intelligence,<br><em>Unlocked</em></h1>
+  <p class="hero-sub">Join KORE as a Member or VIP to access unlimited AI, fit memory, private drops, and a direct line to the brand.</p>
+  <div class="current-plan-banner" id="currentPlanBanner">
+    <p class="cpb-label">Your Current Plan</p>
+    <p class="cpb-name" id="cpbName">Free</p>
+    <p class="cpb-detail" id="cpbDetail">Upgrade anytime below</p>
+  </div>
+</section>
+
+<div class="billing-toggle">
+  <span class="bt-label on" id="lblMonthly">Monthly</span>
+  <button class="bt-switch" id="billingSwitch" onclick="toggleBilling()">
+    <div class="bt-knob"></div>
+  </button>
+  <span class="bt-label" id="lblYearly">Annual <span class="save-badge">Save 20%</span></span>
+</div>
+
+<div class="plans-wrap">
+  <div class="plans-grid">
+    <div class="plan-card" id="card-free">
+      <div class="plan-tier">Tier 00</div>
+      <h2 class="plan-name">Free</h2>
+      <p class="plan-tagline">Explore the brand. Ask questions. Get a feel for the agent.</p>
+      <div class="plan-price-wrap">
+        <div class="plan-price">&#8358;<em>0</em></div>
+        <p class="plan-price-unit">Forever free</p>
+      </div>
+      <ul class="plan-features">
+        <li><span class="fi yes">&#10003;</span>Browse full collection</li>
+        <li><span class="fi yes">&#10003;</span>5 AI messages total</li>
+        <li><span class="fi yes">&#10003;</span>Basic order placement</li>
+        <li><span class="fi no">&#10005;</span>AI fit memory</li>
+        <li><span class="fi no">&#10005;</span>Conversation history</li>
+        <li><span class="fi no">&#10005;</span>Private drops access</li>
+      </ul>
+      <button class="plan-cta outline" id="cta-free" onclick="ctaFree()">Current Plan</button>
+    </div>
+
+    <div class="plan-card featured" id="card-member">
+      <span class="plan-badge pop">Most Popular</span>
+      <div class="plan-tier">Tier 01</div>
+      <h2 class="plan-name">Mem<em>ber</em></h2>
+      <p class="plan-tagline">Your personal KORE intelligence. The agent knows you, your fit, your orders.</p>
+      <div class="plan-price-wrap">
+        <div class="plan-price">$<em id="memberPrice">7</em></div>
+        <p class="plan-price-unit" id="memberUnit">per month</p>
+        <p class="plan-price-ngn" id="memberNgn">Loading&#8230;</p>
+        <p class="plan-price-annual" id="memberAnnual" style="display:none;">Billed &#8358;<span id="memberAnnualNgn"></span> / year</p>
+      </div>
+      <ul class="plan-features">
+        <li><span class="fi yes">&#10003;</span>Everything in Free</li>
+        <li><span class="fi yes">&#10003;</span><strong>Unlimited</strong> AI messages</li>
+        <li><span class="fi yes">&#10003;</span>Full conversation history</li>
+        <li><span class="fi yes">&#10003;</span>AI fit profile memory</li>
+        <li><span class="fi yes">&#10003;</span>Real-time order tracking</li>
+        <li><span class="fi no">&#10005;</span>Private drops access</li>
+      </ul>
+      <button class="plan-cta solid" id="cta-member" onclick="subscribe('member')">Subscribe as Member &#8594;</button>
+    </div>
+
+    <div class="plan-card" id="card-vip">
+      <span class="plan-badge" style="background:rgba(196,164,107,.12);color:var(--accent);border:1px solid rgba(196,164,107,.25);">&#10022; VIP</span>
+      <div class="plan-tier">Tier 02</div>
+      <h2 class="plan-name"><em>V</em>IP</h2>
+      <p class="plan-tagline">The full KORE experience. First access, free shipping, direct line to the brand.</p>
+      <div class="plan-price-wrap">
+        <div class="plan-price">$<em id="vipPrice">15</em></div>
+        <p class="plan-price-unit" id="vipUnit">per month</p>
+        <p class="plan-price-ngn" id="vipNgn">Loading&#8230;</p>
+        <p class="plan-price-annual" id="vipAnnual" style="display:none;">Billed &#8358;<span id="vipAnnualNgn"></span> / year</p>
+      </div>
+      <ul class="plan-features">
+        <li><span class="fi yes">&#10003;</span>Everything in Member</li>
+        <li><span class="fi star">&#10022;</span><strong>Free</strong> first-order shipping</li>
+        <li><span class="fi star">&#10022;</span>Private drop early access</li>
+        <li><span class="fi star">&#10022;</span>Direct WhatsApp line to KORE</li>
+        <li><span class="fi star">&#10022;</span>Exclusive VIP-only pieces</li>
+      </ul>
+      <button class="plan-cta solid" id="cta-vip" onclick="subscribe('vip')" style="background:linear-gradient(135deg,var(--accent),#A07840);">Subscribe as VIP &#10022;</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Secure Configuration ──
+const SU = window.ENV?.SUPABASE_URL || 'YOUR_SUPABASE_URL';
+const SK = window.ENV?.SUPABASE_ANON_KEY || 'YOUR_SUPABASE_ANON_KEY';
+const PK = window.ENV?.PAYSTACK_PUBLIC_KEY || 'YOUR_PAYSTACK_KEY';
+const sb = supabase.createClient(SU, SK);
+
+let user=null, profile=null, fx=1620, isYearly=false;
+
+// ── Theme Integration ──
+document.getElementById('themeToggle')?.addEventListener('click', () => {
+  const next = KoreTheme.get().mode === 'dark' ? 'light' : 'dark';
+  KoreTheme.set('mode', next);
+});
+
+// ── Optimized Cursor ──
+const cur = document.getElementById('cur');
+let mouseX=0, mouseY=0, curX=0, curY=0;
+document.addEventListener('mousemove', e => { mouseX=e.clientX; mouseY=e.clientY; });
+function animateCursor() {
+  curX += (mouseX - curX) * 0.2;
+  curY += (mouseY - curY) * 0.2;
+  cur.style.transform = `translate(${curX - 6}px, ${curY - 6}px)`;
+  requestAnimationFrame(animateCursor);
+}
+requestAnimationFrame(animateCursor);
+document.querySelectorAll('a, button').forEach(el => {
+  el.addEventListener('mouseenter', () => cur.classList.add('big'));
+  el.addEventListener('mouseleave', () => cur.classList.remove('big'));
+});
+
+// ── Init & Auth ──
+(async () => {
+  try {
+    const { data: fxd } = await sb.from('fx_rates').select('rate').order('fetched_at', { ascending: false }).limit(1).single();
+    if(fxd?.rate) fx = fxd.rate;
+  } catch(e) {}
+  updatePrices();
+
+  const { data: { session } } = await sb.auth.getSession();
+  if(session) {
+    user = session.user;
+    const { data: p } = await sb.from('profiles').select('*').eq('id', user.id).single();
+    profile = p;
+    showCurrentPlan(p);
+  }
+})();
+
+// ── UI Logic ──
+function updatePrices() {
+  const memberMonthly=7, vipMonthly=15;
+  const memberNgn=Math.round(memberMonthly*fx);
+  const vipNgn=Math.round(vipMonthly*fx);
+
+  if(isYearly) {
+    const memberY=Math.round(memberMonthly*12*.8);
+    const vipY=Math.round(vipMonthly*12*.8);
+    document.getElementById('memberPrice').textContent=memberY;
+    document.getElementById('memberUnit').textContent='per year (20% off)';
+    document.getElementById('memberNgn').textContent='~\u20a6'+Math.round(memberY*fx).toLocaleString()+' / year';
+    document.getElementById('memberAnnual').style.display='none';
+
+    document.getElementById('vipPrice').textContent=vipY;
+    document.getElementById('vipUnit').textContent='per year (20% off)';
+    document.getElementById('vipNgn').textContent='~\u20a6'+Math.round(vipY*fx).toLocaleString()+' / year';
+    document.getElementById('vipAnnual').style.display='none';
+  } else {
+    document.getElementById('memberPrice').textContent=memberMonthly;
+    document.getElementById('memberUnit').textContent='per month';
+    document.getElementById('memberNgn').textContent='~\u20a6'+memberNgn.toLocaleString()+' / month';
+    document.getElementById('memberAnnual').style.display='block';
+    document.getElementById('memberAnnualNgn').textContent=Math.round(memberMonthly*12*.8*fx).toLocaleString();
+
+    document.getElementById('vipPrice').textContent=vipMonthly;
+    document.getElementById('vipUnit').textContent='per month';
+    document.getElementById('vipNgn').textContent='~\u20a6'+vipNgn.toLocaleString()+' / month';
+    document.getElementById('vipAnnual').style.display='block';
+    document.getElementById('vipAnnualNgn').textContent=Math.round(vipMonthly*12*.8*fx).toLocaleString();
+  }
+}
+
+function toggleBilling() {
+  isYearly = !isYearly;
+  document.getElementById('billingSwitch').classList.toggle('yearly', isYearly);
+  document.getElementById('lblMonthly').classList.toggle('on', !isYearly);
+  document.getElementById('lblYearly').classList.toggle('on', isYearly);
+  updatePrices();
+}
+
+function showCurrentPlan(p) {
+  if(!p) return;
+  const tier = p.subscription_tier || 'free';
+  const status = p.subscription_status || 'inactive';
+  const banner = document.getElementById('currentPlanBanner');
+  banner.classList.add('show');
+  document.getElementById('cpbName').textContent = tier.toUpperCase();
+
+  if(tier === 'free') {
+    document.getElementById('cpbDetail').textContent = 'Upgrade below to unlock the full experience';
+  } else if(status === 'active') {
+    const end = p.subscription_end_date ? new Date(p.subscription_end_date).toLocaleDateString() : '';
+    document.getElementById('cpbDetail').textContent = end ? 'Renews ' + end : 'Active';
+    const ctaEl = document.getElementById('cta-' + tier);
+    if(ctaEl) { ctaEl.textContent = 'Current Plan'; ctaEl.className = 'plan-cta current'; ctaEl.disabled = true; }
+  }
+}
+
+// ── Subscribe ──
+async function subscribe(plan) {
+  if(!user) {
+    localStorage.setItem('kore-sub-intent', plan);
+    location.href = 'login.html?next=membership.html';
+    return;
+  }
+
+  const tier = profile?.subscription_tier || 'free';
+  const status = profile?.subscription_status || 'inactive';
+  if(tier === plan && status === 'active') { toast('You are already on this plan', 'ok'); return; }
+
+  const chargeUsd = isYearly ? (plan==='vip'?15:7)*12*.8 : (plan==='vip'?15:7);
+  const chargeNgn = Math.round(chargeUsd * fx);
+
+  const btn = document.getElementById('cta-' + plan);
+  const orig = btn.textContent;
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Opening payment...';
+
+  // SECURITY WARNING:
+  // Direct client-side DB updates via Paystack callback are highly insecure.
+  // This logic MUST be migrated to `netlify/functions/paystack-webhook.js`.
+  // The frontend should ONLY trigger the UI and await a server response.
+  PaystackPop.setup({
+    key: PK,
+    email: user.email,
+    amount: chargeNgn * 100,
+    currency: 'NGN',
+    metadata: { user_id: user.id, plan, billing: isYearly ? 'annual' : 'monthly' },
+    onClose: () => { btn.disabled = false; btn.textContent = orig; },
+    callback: async (res) => {
+      /* --- PROTOTYPE ONLY: DO NOT USE IN PRODUCTION --- */
+      const months = isYearly ? 12 : 1;
+      const expiry = new Date(Date.now() + months * 30 * 24 * 60 * 60 * 1000).toISOString();
+      await sb.from('profiles').update({
+        subscription_tier: plan, subscription_status: 'active', subscription_end_date: expiry
+      }).eq('id', user.id);
+      /* ------------------------------------------------ */
+      
+      btn.disabled = false; btn.textContent = orig;
+      toast(`Welcome to KORE ${plan.toUpperCase()}! Redirecting...`, 'ok');
+      setTimeout(() => location.href = 'agent.html', 2000);
+    }
+  }).openIframe();
+}
+
+function ctaFree() {
+  if(!user) location.href = 'login.html';
+  else toast('You are on the free plan. Upgrade above.', 'ok');
+}
+
+function toast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast ' + type + ' show';
+  setTimeout(() => t.className = 'toast', 4000);
+}
+</script>
+</body>
+</html>
