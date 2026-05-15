@@ -51,13 +51,27 @@ export const Route = createFileRoute("/api/public/paystack-webhook")({
           }
         }
 
-        // Subscription events — log for now.
-        if (event?.startsWith("subscription.")) {
-          await supabaseAdmin.from("site_settings").upsert({
-            key: `paystack:last_${event}`,
-            value: { at: new Date().toISOString(), tx },
-            updated_at: new Date().toISOString(),
-          });
+        if (event === "subscription.create" || event === "subscription.enable") {
+          const userId = tx.metadata?.user_id ?? null;
+          const tier = tx.metadata?.tier ?? null;
+          if (userId && tier) {
+            await supabaseAdmin.from("profiles").update({ membership_tier: tier }).eq("id", userId);
+            await supabaseAdmin.from("subscriptions").upsert({
+              user_id: userId,
+              tier,
+              payment_ref: tx.reference ?? null,
+              status: "active",
+              updated_at: new Date().toISOString(),
+            }, { onConflict: "user_id" });
+          }
+        }
+
+        if (event === "subscription.disable" || event === "subscription.not_renew") {
+          const userId = tx.metadata?.user_id ?? null;
+          if (userId) {
+            await supabaseAdmin.from("profiles").update({ membership_tier: null }).eq("id", userId);
+            await supabaseAdmin.from("subscriptions").update({ status: "cancelled", updated_at: new Date().toISOString() }).eq("user_id", userId);
+          }
         }
 
         return new Response("ok", { status: 200 });
