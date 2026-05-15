@@ -187,8 +187,8 @@ export const uploadAvatar = createServerFn({ method: "POST" })
   .inputValidator((d: { token: string; filename: string; data_base64: string; content_type: string }) => d)
   .handler(async ({ data }) => {
     const user = await getAuthedUser(data.token);
-    // Ensure avatars bucket exists (idempotent — ignores "already exists" error)
-    await supabaseAdmin.storage.createBucket("avatars", { public: true }).catch(() => {});
+    // Ensure avatars bucket exists (idempotent)
+    try { await supabaseAdmin.storage.createBucket("avatars", { public: true }); } catch { /* already exists */ }
     const buf = Buffer.from(data.data_base64, "base64");
     const ext = data.filename.split(".").pop()?.toLowerCase() || "jpg";
     const path = `${user.id}/avatar.${ext}`;
@@ -202,8 +202,8 @@ export const uploadAvatar = createServerFn({ method: "POST" })
     await supabaseAdmin.auth.admin.updateUserById(user.id, {
       user_metadata: { ...(user.user_metadata ?? {}), avatar_url: avatarUrl },
     });
-    // Also store in profiles table if the column exists (safe to fail)
-    await supabaseAdmin.from("profiles").upsert({ id: user.id, avatar_url: avatarUrl }, { onConflict: "id" }).catch(() => {});
+    // Also store in profiles table if the column exists
+    try { await supabaseAdmin.from("profiles").upsert({ id: user.id, avatar_url: avatarUrl }, { onConflict: "id" }); } catch { /* column may not exist yet */ }
     return { url: avatarUrl };
   });
 
