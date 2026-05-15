@@ -17,18 +17,21 @@ async function isAdmin(userId: string, email: string | undefined): Promise<boole
   const envList = (process.env.KORE_ADMIN_EMAILS || "")
     .split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
   const list = [...new Set([...envList, "grey.izilein@gmail.com"])];
+  // Email check never needs supabaseAdmin — works without service role key.
   if (email && list.includes(email.toLowerCase())) return true;
-  // Bootstrap: the EARLIEST registered user is admin. listUsers returns
-  // newest-first by default, so we fetch a wide page and sort ascending.
-  const { data } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
-  const users = ((data as any)?.users ?? []) as Array<{ id: string; created_at: string }>;
-  if (users.length === 0) return false;
-  // Single-user project → that user is admin.
-  if (users.length === 1 && users[0].id === userId) return true;
-  const earliest = [...users].sort((a, b) =>
-    new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-  )[0];
-  return !!earliest && earliest.id === userId;
+  // Fallback: earliest registered user is admin. Requires service role key.
+  try {
+    const { data } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+    const users = ((data as any)?.users ?? []) as Array<{ id: string; created_at: string }>;
+    if (users.length === 0) return false;
+    if (users.length === 1 && users[0].id === userId) return true;
+    const earliest = [...users].sort((a, b) =>
+      new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    )[0];
+    return !!earliest && earliest.id === userId;
+  } catch {
+    return false;
+  }
 }
 
 async function requireAdmin(token: string) {
