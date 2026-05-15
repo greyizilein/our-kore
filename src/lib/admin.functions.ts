@@ -1,12 +1,15 @@
 import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
 import { supabaseAdmin } from "@/integrations/kore-supabase/admin.server";
+import { KORE_SUPABASE_URL, KORE_SUPABASE_ANON_KEY } from "@/integrations/kore-supabase/client";
 
 // --- Admin gate -----------------------------------------------------------
 async function getAuthedUser(token: string) {
   if (!token) throw new Error("Unauthorized");
-  const url = process.env.KORE_SUPABASE_URL!;
-  const anon = process.env.KORE_SUPABASE_ANON_KEY || process.env.KORE_SUPABASE_PUBLISHABLE_KEY!;
+  // Env vars are preferred; fall back to the hardcoded public values in client.ts
+  // so server functions work even when KORE_SUPABASE_* env vars aren't set in Vercel.
+  const url = process.env.KORE_SUPABASE_URL || KORE_SUPABASE_URL;
+  const anon = process.env.KORE_SUPABASE_ANON_KEY || process.env.KORE_SUPABASE_PUBLISHABLE_KEY || KORE_SUPABASE_ANON_KEY;
   const c = createClient(url, anon, { global: { headers: { Authorization: `Bearer ${token}` } } });
   const { data, error } = await c.auth.getUser();
   if (error || !data.user) throw new Error("Unauthorized");
