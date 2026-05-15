@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
-// Vite ?raw inlines the markdown at build time as a fallback.
 import PUBLIC_KB_FALLBACK from "../../../knowledge/public.md?raw";
 import PRIVATE_KB_FALLBACK from "../../../knowledge/private.md?raw";
 
@@ -73,46 +72,80 @@ async function handleChat(request: Request) {
       messages: { role: string; content: string }[];
       agentName?: string;
     };
-    const apiKey = process.env.LOVABLE_API_KEY;
+    const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
-      return new Response(JSON.stringify({ error: "LOVABLE_API_KEY missing" }), {
+      return new Response(JSON.stringify({ error: "ANTHROPIC_API_KEY missing" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     const { pub, priv } = await loadKnowledge();
+    const systemPrompt = buildSystemPrompt(body.agentName ?? "KORE", pub, priv);
 
-    const upstream = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const messages = body.messages
+      .filter((m) => m.role === "user" || m.role === "assistant")
+      .map((m) => ({ role: m.role as "user" | "assistant", content: m.content }));
+
+    const upstream = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
-      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      headers: {
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          { role: "system", content: buildSystemPrompt(body.agentName ?? "KORE", pub, priv) },
-          ...body.messages,
-        ],
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 1024,
+        system: systemPrompt,
+        messages,
         stream: true,
       }),
     });
 
     if (!upstream.ok) {
-      if (upstream.status === 429)
-        return new Response(JSON.stringify({ error: "Too many requests. Try again in a moment." }), {
-          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      if (upstream.status === 402)
-        return new Response(JSON.stringify({ error: "AI credits exhausted. Add funds in Workspace → Usage." }), {
-          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
       const t = await upstream.text();
-      console.error("AI gateway error", upstream.status, t);
-      return new Response(JSON.stringify({ error: "Concierge unavailable." }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      console.error("Anthropic API error", upstream.status, t);
+      const msg = upstream.status === 429
+        ? "Too many requests. Try again in a moment."
+        : "Concierge unavailable.";
+      return new Response(JSON.stringify({ error: msg }), {
+        status: upstream.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    return new Response(upstream.body, {
+    const encoder = new TextEncoder();
+    const decoder = new TextDecoder();
+    const readable = new ReadableStream({
+      async start(controller) {
+        const reader = upstream.body!.getReader();
+        let buf = "";
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buf += decoder.decode(value, { stream: true });
+          const lines = buf.split("\n");
+          buf = lines.pop() ?? "";
+          for (const line of lines) {
+            if (!line.startsWith("data: ")) continue;
+            const raw = line.slice(6).trim();
+            if (!raw || raw === "[DONE]") continue;
+            try {
+              const evt = JSON.parse(raw);
+              const text = evt.delta?.type === "text_delta" ? evt.delta.text : null;
+              if (text) {
+                const out = JSON.stringify({ choices: [{ delta: { content: text } }] });
+                controller.enqueue(encoder.encode(`data: ${out}\n\n`));
+              }
+            } catch {}
+          }
+        }
+        controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+        controller.close();
+      },
+    });
+
+    return new Response(readable, {
       headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
     });
   } catch (e) {
