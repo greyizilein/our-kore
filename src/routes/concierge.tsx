@@ -607,32 +607,8 @@ function Page() {
         {/* ── CENTER: chat ── */}
         <div className="relative flex flex-col min-w-0 min-h-0 flex-1 px-4 sm:px-6 lg:px-10 py-4 lg:py-6">
 
-          {/* Mobile header */}
+          {/* Mobile header: greeting left · shortcuts + avatar right */}
           <div className="lg:hidden shrink-0 flex items-center gap-3 pb-4 border-b border-border/40 mb-3">
-            {/* Agent avatar — SheetTrigger opens history + settings */}
-            <Sheet open={settingsOpen} onOpenChange={setSettingsOpen}>
-              <SheetTrigger asChild>
-                <button
-                  aria-label="Chat settings and history"
-                  className="h-10 w-10 rounded-full bg-accent text-accent-foreground grid place-items-center text-sm font-medium tracking-wider shrink-0 hover:opacity-80 transition-opacity"
-                  style={theme.accent ? mobileAgentBtnStyle : undefined}
-                >
-                  {agentName.slice(0, 1).toUpperCase() || "K"}
-                </button>
-              </SheetTrigger>
-              <SheetContent side="left" className="w-[88vw] sm:max-w-sm p-0 flex flex-col overflow-hidden">
-                <SheetHeader className="px-4 pt-5 pb-3 border-b border-border/40 shrink-0">
-                  <SheetTitle className="text-sm tracking-[0.2em] uppercase text-left font-normal">{agentName}</SheetTitle>
-                </SheetHeader>
-                <div className="flex-1 flex flex-col overflow-hidden min-h-0">
-                  {historyContent(() => setSettingsOpen(false))}
-                </div>
-                <div className="shrink-0 border-t border-border/40 px-4 py-4">
-                  <ThemePicker current={chatTheme} onChange={handleThemeChange} />
-                </div>
-              </SheetContent>
-            </Sheet>
-
             <div className="flex-1 min-w-0">
               <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">{greeting}</p>
               <p className="font-display text-base truncate">
@@ -657,7 +633,31 @@ function Page() {
               </SheetContent>
             </Sheet>
 
-            <span className="h-2 w-2 rounded-full bg-accent animate-pulse shrink-0" style={accentDotStyle} />
+            {/* Agent avatar on the right — opens history + settings */}
+            <Sheet open={settingsOpen} onOpenChange={setSettingsOpen}>
+              <SheetTrigger asChild>
+                <button
+                  aria-label="Chat settings and history"
+                  className="h-10 w-10 rounded-full shrink-0 hover:opacity-80 transition-opacity ring-2 ring-border overflow-hidden grid place-items-center text-sm font-medium tracking-wider"
+                  style={theme.accent
+                    ? { backgroundColor: theme.accent, color: theme.userText ?? "#fff", outlineColor: theme.accent }
+                    : { backgroundColor: "hsl(var(--foreground))", color: "hsl(var(--background))" }}
+                >
+                  {agentName.slice(0, 1).toUpperCase() || "K"}
+                </button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-[88vw] sm:max-w-sm p-0 flex flex-col overflow-hidden">
+                <SheetHeader className="px-4 pt-5 pb-3 border-b border-border/40 shrink-0">
+                  <SheetTitle className="text-sm tracking-[0.2em] uppercase text-left font-normal">{agentName}</SheetTitle>
+                </SheetHeader>
+                <div className="flex-1 flex flex-col overflow-hidden min-h-0">
+                  {historyContent(() => setSettingsOpen(false))}
+                </div>
+                <div className="shrink-0 border-t border-border/40 px-4 py-4">
+                  <ThemePicker current={chatTheme} onChange={handleThemeChange} />
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
 
           {/* Messages area */}
