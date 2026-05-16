@@ -274,7 +274,6 @@ function Page() {
 
   // UI state
   const [helpOpen, setHelpOpen] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false); // mobile avatar sheet
   const [themePickerOpen, setThemePickerOpen] = useState(false); // PC gear toggle
 
   // Theme state (persisted in localStorage)
@@ -567,10 +566,6 @@ function Page() {
   const agentAvatarStyle: React.CSSProperties = theme.agentBg
     ? { backgroundColor: theme.agentBg, color: theme.agentText, borderColor: theme.agentBorder }
     : {};
-  const accentDotStyle: React.CSSProperties = theme.accent ? { backgroundColor: theme.accent } : {};
-  const mobileAgentBtnStyle: React.CSSProperties = theme.accent
-    ? { backgroundColor: theme.accent, color: theme.userText ?? "#fff" }
-    : {};
 
   // ── JSX ─────────────────────────────────────────────────────────────────────
 
@@ -607,55 +602,42 @@ function Page() {
         {/* ── CENTER: chat ── */}
         <div className="relative flex flex-col min-w-0 min-h-0 flex-1 px-4 sm:px-6 lg:px-10 py-4 lg:py-6">
 
-          {/* Mobile header: greeting left · shortcuts + avatar right */}
-          <div className="lg:hidden shrink-0 flex items-center gap-3 pb-4 border-b border-border/40 mb-3">
-            <div className="flex-1 min-w-0">
+          {/* Mobile header: greeting left · menu right (no avatar here) */}
+          <div className="lg:hidden shrink-0 flex items-center justify-between pb-4 border-b border-border/40 mb-3">
+            <div className="min-w-0 mr-3">
               <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">{greeting}</p>
               <p className="font-display text-base truncate">
                 {activeChat ? activeChat.title : `Talking with ${agentName}`}
               </p>
             </div>
 
-            {/* Shortcuts */}
+            {/* Combined sheet: history + theme + shortcuts */}
             <Sheet open={helpOpen} onOpenChange={setHelpOpen}>
               <SheetTrigger asChild>
-                <button aria-label="Shortcuts" className="h-9 w-9 grid place-items-center rounded-full border border-border hover:border-foreground shrink-0">
-                  <span className="text-sm">?</span>
-                </button>
-              </SheetTrigger>
-              <SheetContent side="right" className="w-[88vw] sm:max-w-sm overflow-y-auto">
-                <SheetHeader><SheetTitle>Shortcuts & Commands</SheetTitle></SheetHeader>
-                <div className="mt-6"><ShortcutsPanel /></div>
-                <div className="mt-6 flex flex-col gap-2">
-                  <button onClick={() => { exportChat(); setHelpOpen(false); }} className="text-left text-xs uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground">↓ Save chat (.md)</button>
-                  <button onClick={() => { newChat(); setHelpOpen(false); }} className="text-left text-xs uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground">↺ New conversation</button>
-                </div>
-              </SheetContent>
-            </Sheet>
-
-            {/* Agent avatar on the right — opens history + settings */}
-            <Sheet open={settingsOpen} onOpenChange={setSettingsOpen}>
-              <SheetTrigger asChild>
-                <button
-                  aria-label="Chat settings and history"
-                  className="h-10 w-10 rounded-full shrink-0 hover:opacity-80 transition-opacity ring-2 ring-border overflow-hidden grid place-items-center text-sm font-medium tracking-wider"
-                  style={theme.accent
-                    ? { backgroundColor: theme.accent, color: theme.userText ?? "#fff", outlineColor: theme.accent }
-                    : { backgroundColor: "hsl(var(--foreground))", color: "hsl(var(--background))" }}
-                >
-                  {agentName.slice(0, 1).toUpperCase() || "K"}
+                <button aria-label="Menu" className="h-9 w-9 grid place-items-center rounded-full border border-border hover:border-foreground shrink-0">
+                  <span className="text-sm">≡</span>
                 </button>
               </SheetTrigger>
               <SheetContent side="right" className="w-[88vw] sm:max-w-sm p-0 flex flex-col overflow-hidden">
                 <SheetHeader className="px-4 pt-5 pb-3 border-b border-border/40 shrink-0">
-                  <SheetTitle className="text-sm tracking-[0.2em] uppercase text-left font-normal">{agentName}</SheetTitle>
+                  <SheetTitle className="text-sm tracking-[0.2em] uppercase font-normal text-left">{agentName}</SheetTitle>
                 </SheetHeader>
                 <div className="flex-1 flex flex-col overflow-hidden min-h-0">
-                  {historyContent(() => setSettingsOpen(false))}
+                  {historyContent(() => setHelpOpen(false))}
                 </div>
                 <div className="shrink-0 border-t border-border/40 px-4 py-4">
                   <ThemePicker current={chatTheme} onChange={handleThemeChange} />
                 </div>
+                <details className="shrink-0 border-t border-border/40 px-4 py-3">
+                  <summary className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground cursor-pointer select-none">
+                    Shortcuts & commands
+                  </summary>
+                  <div className="mt-4 pb-2"><ShortcutsPanel /></div>
+                  <div className="mt-3 flex flex-col gap-2">
+                    <button onClick={() => { exportChat(); setHelpOpen(false); }} className="text-left text-xs uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground">↓ Save chat (.md)</button>
+                    <button onClick={() => { newChat(); setHelpOpen(false); }} className="text-left text-xs uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground">↺ New conversation</button>
+                  </div>
+                </details>
               </SheetContent>
             </Sheet>
           </div>
@@ -663,12 +645,28 @@ function Page() {
           {/* Messages area */}
           <div ref={scrollRef} className="flex-1 overflow-y-auto pb-4 pr-1">
             {messages.length === 0 ? (
-              /* Empty state — left-aligned welcome, blank middle */
+              /* Empty state — greeting top-left, avatar opposite the name */
               <div className="pt-6 pb-4">
                 <p className="text-xs tracking-[0.2em] uppercase text-muted-foreground mb-2">{greeting},</p>
-                <h2 className="font-display text-4xl sm:text-5xl lg:text-4xl xl:text-5xl font-light leading-[1.05] mb-4">
-                  {firstName}.
-                </h2>
+                <div className="flex items-start justify-between gap-4 mb-4">
+                  <h2 className="font-display text-4xl sm:text-5xl lg:text-4xl xl:text-5xl font-light leading-[1.05]">
+                    {firstName}.
+                  </h2>
+                  {/* Avatar — tapping opens the same combined sheet */}
+                  <Sheet open={helpOpen} onOpenChange={setHelpOpen}>
+                    <SheetTrigger asChild>
+                      <button
+                        aria-label="Open menu"
+                        className="mt-1 shrink-0 h-12 w-12 rounded-full overflow-hidden grid place-items-center text-sm font-medium ring-2 ring-foreground/20 hover:opacity-80 transition-opacity"
+                        style={{ backgroundColor: "hsl(var(--foreground))", color: "hsl(var(--background))" }}
+                      >
+                        {avatarUrl
+                          ? <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
+                          : agentName.slice(0, 1).toUpperCase() || "K"}
+                      </button>
+                    </SheetTrigger>
+                  </Sheet>
+                </div>
                 <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">
                   Ask anything about fit, pieces, styling — or say "design…" to sketch it.
                 </p>
