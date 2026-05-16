@@ -1,7 +1,6 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { LazyVideo } from "@/components/chrome/lazy-video";
 import { useState, useEffect } from "react";
-import { SiteShell } from "@/components/chrome/site-shell";
 import { supabase } from "@/integrations/kore-supabase/client";
 import { useAuth } from "@/lib/auth/auth-context";
 
@@ -70,8 +69,15 @@ function Page() {
   };
 
   return (
-    <SiteShell>
-      <div className="grid md:grid-cols-2 min-h-[calc(100vh-5rem)]">
+    <div className="relative min-h-screen overflow-hidden bg-background">
+      {/* Mobile: full-screen video background */}
+      <div className="md:hidden absolute inset-0">
+        <LazyVideo src="/media/silhouette.mp4" className="absolute inset-0 h-full w-full" />
+        <div className="absolute inset-0 bg-black/65" />
+      </div>
+
+      <div className="relative z-10 grid md:grid-cols-2 min-h-screen">
+        {/* Desktop left panel: video */}
         <div className="relative hidden md:block bg-black overflow-hidden">
           <LazyVideo src="/media/silhouette.mp4" className="absolute inset-0 h-full w-full" />
           <div className="absolute inset-0 bg-gradient-to-br from-background/40 via-transparent to-background/40" />
@@ -84,6 +90,7 @@ function Page() {
           </div>
         </div>
 
+        {/* Form panel */}
         <div className="flex flex-col justify-center px-6 md:px-16 py-16">
           <p className="text-xs tracking-[0.2em] uppercase text-accent mb-4">Member Access</p>
           <h1 className="font-display text-4xl md:text-5xl font-light mb-2">
@@ -156,14 +163,6 @@ function Page() {
               />
             </div>
 
-            {mode === "signin" && (
-              <div className="text-right -mt-2">
-                <Link to="/forgot-password" className="text-xs tracking-[0.1em] uppercase text-muted-foreground hover:text-foreground">
-                  Forgot password?
-                </Link>
-              </div>
-            )}
-
             <button
               type="submit"
               disabled={loading}
@@ -172,12 +171,8 @@ function Page() {
               {loading ? "..." : mode === "signin" ? "Sign In →" : "Create Account →"}
             </button>
           </form>
-
-          <p className="mt-10 pt-6 border-t border-border text-xs text-muted-foreground leading-relaxed">
-            By continuing you agree to KORE's terms. Your data is used only to manage your account, fit profile, and orders. We do not sell or share personal information.
-          </p>
         </div>
       </div>
-    </SiteShell>
+    </div>
   );
 }
