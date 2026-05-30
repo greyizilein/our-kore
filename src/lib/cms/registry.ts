@@ -67,7 +67,7 @@ export const PAGES: PageDef[] = [
       { id: "membership.title",   label: "Membership block — title",   multiline: true, wired: true,
         default: "For the wardrobe you'll keep ten years." },
       { id: "membership.body",    label: "Membership block — body",    multiline: true, wired: true,
-        default: "Members access first drops, complimentary alterations, and a personal agent — KORE — that holds your sizes, your preferences and your taste." },
+        default: "Members access new collections first, discounted repairs, and a personal agent — KORE — that holds your sizes, your preferences and your taste." },
       { id: "membership.cta",     label: "Membership block — CTA",     default: "Become a member", wired: true },
       { id: "founder.quote",      label: "Founder quote",              multiline: true, wired: true,
         default: "Worth is derived from fit, material intelligence, construction, functional utility, and the KORE experience of ownership. Each KORE member owns an exclusive work of art that no one else walking the gallery of this world will ever own. And that is the true meaning of luxury." },

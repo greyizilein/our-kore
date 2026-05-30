@@ -1,5 +1,5 @@
 // KORE collection registry. The "sets" the user browses on /collection.
-// FORME is the live drop with real pieces; later collections are atelier
+// FORME is the live collection with real pieces; later sets are atelier
 // placeholders until imagery and pieces are committed.
 
 import { PRODUCTS, type Product } from "./products";

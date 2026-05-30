@@ -14,7 +14,7 @@ export function SubscriptionSection({ compact = false }: { compact?: boolean }) 
     <div className={compact ? "py-16 px-6" : "py-24 px-6 max-w-2xl"}>
       <p className="text-xs tracking-[0.25em] uppercase text-accent mb-4">Subscribe</p>
       <h2 className="font-display text-3xl md:text-4xl font-light mb-3">
-        Before the next drop.
+        Before the next collection.
       </h2>
       <p className="text-sm text-muted-foreground leading-relaxed mb-8 max-w-sm">
         Early access, collection notes, and invitations — nothing else. One email per season.

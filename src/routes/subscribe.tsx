@@ -9,9 +9,9 @@ import { initSubscriptionCheckout } from "@/lib/paystack.functions";
 export const Route = createFileRoute("/subscribe")({
   component: Page,
   validateSearch: (s: Record<string, unknown>) => ({
-    tier: (["access", "circle", "atelier"].includes(s.tier as string)
+    tier: (["access", "reserve", "atelier", "circle"].includes(s.tier as string)
       ? s.tier
-      : "circle") as "access" | "circle" | "atelier",
+      : "access") as "access" | "reserve" | "atelier" | "circle",
   }),
   head: () => ({ meta: [{ title: "Subscribe — KORE" }] }),
 });
@@ -19,24 +19,59 @@ export const Route = createFileRoute("/subscribe")({
 const TIER_INFO = {
   access: {
     name: "Access",
-    price: "₦15,000",
+    price: "€50",
     period: "/ month",
     blurb: "Your entry into the KORE ecosystem.",
-    perks: ["Full collection access", "Member pricing", "KORE concierge", "Standard shipping"],
+    perks: [
+      "Full collection access",
+      "Member pricing on all pieces",
+      "KORE concierge",
+      "Discounted repairs on all clothing",
+      "Book 1 piece / 1 colour pre-release",
+    ],
+    yearly: false,
   },
-  circle: {
-    name: "The Circle",
-    price: "₦35,000",
+  reserve: {
+    name: "Reserve",
+    price: "€75",
     period: "/ month",
-    blurb: "Membership.",
-    perks: ["Hold pieces for 7 days", "Free tailoring for life", "Early drops & exclusives", "Lifetime garment repair", "Two atelier visits / year"],
+    blurb: "More access. More flexibility.",
+    perks: [
+      "Everything in Access",
+      "Book 2 pieces / 1 colour pre-release",
+      "Priority shipping",
+      "Extended hold windows",
+    ],
+    yearly: false,
   },
   atelier: {
     name: "Atelier",
-    price: "₦75,000",
+    price: "€120",
     period: "/ month",
     blurb: "Full atelier privileges.",
-    perks: ["Everything in The Circle", "Unlimited atelier visits", "Custom commission priority", "Personal atelier liaison", "Exclusive one-of-one access"],
+    perks: [
+      "Everything in Reserve",
+      "Book 3 pieces / 2 colours pre-release",
+      "Unlimited atelier visits",
+      "Custom commission priority",
+      "Dedicated atelier liaison",
+    ],
+    yearly: false,
+  },
+  circle: {
+    name: "The Circle",
+    price: "€2,500",
+    period: "/ year",
+    blurb: "Exclusive membership. 25 people globally.",
+    perks: [
+      "Everything in Atelier",
+      "One-of-one access",
+      "Personal atelier liaison",
+      "Circle member events",
+      "Commission slots reserved annually",
+      "Named in house archives",
+    ],
+    yearly: true,
   },
 } as const;
 
@@ -44,7 +79,7 @@ function Page() {
   const { tier } = Route.useSearch();
   const { session } = useAuth();
   const initCheckout = useServerFn(initSubscriptionCheckout);
-  const info = TIER_INFO[tier];
+  const info = TIER_INFO[tier as keyof typeof TIER_INFO] ?? TIER_INFO.access;
 
   const [mode, setMode] = useState<"signup" | "signin">("signup");
   const [name, setName] = useState("");
@@ -117,9 +152,20 @@ function Page() {
               <span className="font-display text-3xl">{info.price}</span>
               <span className="text-sm text-muted-foreground ml-2">{info.period}</span>
             </div>
-            <p className="text-muted-foreground mb-8 text-sm">{info.blurb}</p>
+
+            {tier === "circle" && (
+              <p className="text-[11px] uppercase tracking-[0.2em] text-accent mb-1">
+                Capped at 25 members globally
+              </p>
+            )}
+
+            <p className="text-muted-foreground mb-2 text-sm">{info.blurb}</p>
+            <p className="text-[10px] text-muted-foreground/70 mb-8">
+              Prices in €. Charged in NGN at the live rate on the day of payment.
+            </p>
+
             <ul className="space-y-3 mb-10 border-t border-border/40 pt-8">
-              {info.perks.map((p) => (
+              {(info.perks as readonly string[]).map((p) => (
                 <li key={p} className="flex gap-3 text-sm text-muted-foreground">
                   <span className="text-accent">—</span> {p}
                 </li>
@@ -208,7 +254,12 @@ function Page() {
                     <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">{info.name}</span>
                     <span className="font-display text-lg">{info.price} <span className="text-xs text-muted-foreground font-sans">{info.period}</span></span>
                   </div>
-                  <p className="text-xs text-muted-foreground">Recurring subscription · Cancel anytime</p>
+                  <p className="text-xs text-muted-foreground">
+                    {info.yearly ? "Annual subscription" : "Recurring subscription"} · Cancel anytime
+                  </p>
+                  <p className="text-[10px] text-muted-foreground/60 mt-1">
+                    Charged in NGN at the live EUR/NGN rate on the day of payment.
+                  </p>
                 </div>
 
                 {payError && <p className="text-xs text-destructive mb-4">{payError}</p>}

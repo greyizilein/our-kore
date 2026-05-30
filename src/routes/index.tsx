@@ -9,24 +9,24 @@ const SUBSCRIPTION_TIERS = [
   {
     slug: "access",
     name: "Access",
-    price: "₦15,000",
+    price: "€50",
     period: "/ month",
-    perks: ["Full collection access", "Member pricing", "KORE concierge", "Standard shipping"],
+    perks: ["Full collection access", "Member pricing", "KORE concierge", "Discounted repairs", "Book 1 piece pre-release"],
   },
   {
-    slug: "circle",
-    name: "The Circle",
-    price: "₦35,000",
+    slug: "reserve",
+    name: "Reserve",
+    price: "€75",
     period: "/ month",
-    perks: ["Hold pieces for 7 days", "Free tailoring for life", "Early drops & exclusives", "Lifetime garment repair"],
+    perks: ["Everything in Access", "Book 2 pieces pre-release", "Priority shipping", "Extended holds"],
     featured: true,
   },
   {
     slug: "atelier",
     name: "Atelier",
-    price: "₦75,000",
+    price: "€120",
     period: "/ month",
-    perks: ["Everything in The Circle", "Unlimited atelier visits", "Custom commission priority", "Personal atelier liaison"],
+    perks: ["Everything in Reserve", "Book 3 pieces / 2 colours", "Unlimited atelier visits", "Dedicated liaison"],
   },
 ] as const;
 
@@ -55,7 +55,7 @@ function Index() {
   const founderQuote = usePageText("home", "founder.quote", "Worth is derived from fit, material intelligence, construction, functional utility, and the KORE experience of ownership. Each KORE member owns an exclusive work of art that no one else walking the gallery of this world will ever own. And that is the true meaning of luxury.");
   const memEyebrow = usePageText("home", "membership.eyebrow", "Membership");
   const memTitle   = usePageText("home", "membership.title",   "For the wardrobe you'll keep ten years.");
-  const memBody    = usePageText("home", "membership.body",    "Members access first drops, complimentary alterations, and a personal agent — KORE — that holds your sizes, your preferences and your taste.");
+  const memBody    = usePageText("home", "membership.body",    "Members access new collections first, discounted repairs, and a personal agent — KORE — that holds your sizes, your preferences and your taste.");
   const memCta     = usePageText("home", "membership.cta",     "Become a member");
 
   return (
@@ -125,7 +125,7 @@ function Index() {
                 <span>· Considered ·</span>
                 <span>· Engineered in Lagos ·</span>
                 <span>· Made to outlast trends ·</span>
-                <span>· Limited drops ·</span>
+                <span>· Limited collections ·</span>
                 <span>· Members first ·</span>
               </span>
             ))}
@@ -226,12 +226,12 @@ function Index() {
       </section>
 
       {/* FOUNDER QUOTE */}
-      <FadeUp className="py-28 px-6 lg:px-10 border-t border-border/40">
-        <div className="max-w-4xl mx-auto text-center">
-          <p className="font-display italic text-2xl md:text-4xl lg:text-5xl font-light leading-[1.3] text-foreground/90">
+      <FadeUp className="py-16 px-6 lg:px-10 border-t border-border/40">
+        <div className="pl-5 border-l-2 border-accent/60 max-w-xl">
+          <p className="font-display italic text-sm md:text-base font-light leading-relaxed text-foreground/80">
             "{founderQuote}"
           </p>
-          <p className="mt-8 text-[11px] uppercase tracking-[0.3em] text-accent">— Founder, KORE</p>
+          <p className="mt-4 text-[10px] uppercase tracking-[0.3em] text-accent">— Founder, KORE</p>
         </div>
       </FadeUp>
 

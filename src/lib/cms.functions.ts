@@ -54,7 +54,7 @@ export const adminUpsertSiteContent = createServerFn({ method: "POST" })
     await requireAdmin(data.token);
     const { error } = await supabaseAdmin
       .from("site_content")
-      .upsert({ key: data.key, value: data.value, updated_at: new Date().toISOString() });
+      .upsert({ key: data.key, value: data.value, updated_at: new Date().toISOString() }, { onConflict: "key" });
     if (error) throw new Error(error.message);
     return { ok: true };
   });

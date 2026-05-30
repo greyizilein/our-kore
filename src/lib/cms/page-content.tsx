@@ -33,7 +33,7 @@ export function PageContentProvider({ children }: { children: ReactNode }) {
         });
         setOverrides(map);
       })
-      .catch(() => {})
+      .catch((err) => { console.error("[cms] Failed to load site content:", err); })
       .finally(() => setReady(true));
   };
 
