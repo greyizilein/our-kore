@@ -28,15 +28,28 @@ function siteOrigin(): string {
 function tierToPlanCode(tier: string): string | undefined {
   const map: Record<string, string | undefined> = {
     access:  process.env.PAYSTACK_PLAN_ACCESS,
-    circle:  process.env.PAYSTACK_PLAN_CIRCLE,
+    reserve: process.env.PAYSTACK_PLAN_RESERVE,
     atelier: process.env.PAYSTACK_PLAN_ATELIER,
+    circle:  process.env.PAYSTACK_PLAN_CIRCLE,
   };
   return map[tier];
 }
 
-function tierToAmount(tier: string): number {
-  const map: Record<string, number> = { access: 15000, circle: 35000, atelier: 75000 };
-  return map[tier] ?? 15000;
+function tierToEurAmount(tier: string): number {
+  const map: Record<string, number> = { access: 50, reserve: 75, atelier: 120, circle: 2500 };
+  return map[tier] ?? 50;
+}
+
+async function getEurNgnRate(): Promise<number> {
+  try {
+    const res = await fetch("https://open.er-api.com/v6/latest/EUR", {
+      signal: AbortSignal.timeout(5000),
+    });
+    const json = await res.json() as any;
+    const rate = json?.rates?.NGN;
+    if (typeof rate === "number" && rate > 100) return rate;
+  } catch { /* fall through to fallback */ }
+  return 1750;
 }
 
 // --- Initialize a transaction (returns the hosted Paystack URL) ------------
@@ -147,7 +160,9 @@ export const initSubscriptionCheckout = createServerFn({ method: "POST" })
     const user = await getAuthedUser(data.token);
     const reference = `kore_sub_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
     const callback_url = `${siteOrigin()}${data.callback_path || "/subscribe/return"}`;
-    const amount = tierToAmount(data.tier);
+    const eurAmount = tierToEurAmount(data.tier);
+    const rate = await getEurNgnRate();
+    const amount = Math.round(eurAmount * rate);
     const plan_code = tierToPlanCode(data.tier);
 
     const body: Record<string, unknown> = {
