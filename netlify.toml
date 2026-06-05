@@ -1,0 +1,17 @@
+# Netlify build configuration for KORE
+
+[build]
+  command = "bun run build"
+  publish = "dist/client"
+
+# The Supabase URL and anon key are intentionally public — they are designed to
+# be included in client-side bundles (see supabase.com/docs/guides/api/api-keys).
+# Omit them from secrets scanning to prevent false-positive build failures.
+[build.environment]
+  SECRETS_SCAN_OMIT_KEYS = "SUPABASE_URL,SUPABASE_ANON_KEY"
+
+# SPA fallback — all routes handled by the client-side router
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
