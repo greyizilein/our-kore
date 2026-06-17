@@ -62,7 +62,7 @@ function Index() {
     <SiteShell padTop={false}>
       {/* HERO */}
       <section className="relative min-h-[100svh] grid place-items-center overflow-hidden">
-        <LazyVideo src="/v-theme/hero.mp4" className="absolute inset-0 h-full w-full opacity-50" />
+        <LazyVideo src="/v-theme/hero.mp4" className="absolute inset-0 h-full w-full opacity-50" preload="auto" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_30%,color-mix(in_oklab,var(--accent)_22%,transparent),transparent_60%)]" />
         <div className="absolute inset-0 bg-[linear-gradient(180deg,transparent,var(--background)_85%)]" />
 
