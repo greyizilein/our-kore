@@ -253,8 +253,8 @@ function Index() {
 
       {/* FOUNDER QUOTE */}
       <FadeUp className="py-16 px-6 lg:px-10 border-t border-border/40">
-        <div className="pl-5 border-l-2 border-accent/60 max-w-xl">
-          <p className="font-display italic text-sm md:text-base font-light leading-relaxed text-foreground/80">
+        <div className="pl-5 border-l-2 border-accent/60 max-w-2xl">
+          <p className="font-display italic text-base md:text-lg lg:text-xl font-light leading-relaxed text-foreground/80">
             "{founderQuote}"
           </p>
           <p className="mt-4 text-[10px] uppercase tracking-[0.3em] text-accent">Grey, Izilein</p>
