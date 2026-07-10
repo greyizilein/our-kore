@@ -30,6 +30,12 @@ const SUBSCRIPTION_TIERS = [
   },
 ] as const;
 
+const FORME_PIECES = [
+  { src: "/v-theme/reel1.mp4", name: "Field Overcoat", price: "₦ 285,000" },
+  { src: "/v-theme/reel2.mp4", name: "Atelier Trouser", price: "₦ 142,000" },
+  { src: "/v-theme/reel3.mp4", name: "Considered Knit", price: "₦ 98,000" },
+] as const;
+
 export const Route = createFileRoute("/")({
   component: Index,
   head: () => ({
@@ -156,13 +162,28 @@ function Index() {
           </Link>
         </FadeUp>
 
-        <Stagger className="flex overflow-x-auto scrollbar-none snap-x snap-mandatory gap-5 -mx-6 px-6 pb-2 sm:grid sm:grid-cols-2 sm:gap-6 sm:mx-0 sm:px-0 sm:pb-0 sm:overflow-visible sm:snap-none lg:grid-cols-3">
-          {[
-            { src: "/v-theme/reel1.mp4", name: "Field Overcoat", price: "₦ 285,000" },
-            { src: "/v-theme/reel2.mp4", name: "Atelier Trouser", price: "₦ 142,000" },
-            { src: "/v-theme/reel3.mp4", name: "Considered Knit", price: "₦ 98,000" },
-          ].map((p) => (
-            <StaggerChild key={p.name} className="shrink-0 w-[82%] snap-start sm:w-auto sm:shrink">
+        {/* Mobile: continuously flowing filmstrip, no interaction needed */}
+        <div className="sm:hidden -mx-6 overflow-hidden">
+          <div className="flex w-max gap-5 animate-[scroll_38s_linear_infinite]">
+            {[...FORME_PIECES, ...FORME_PIECES].map((p, i) => (
+              <Link key={`${p.name}-${i}`} to="/collection" className="group block shrink-0 w-[72vw]">
+                <div className="aspect-[3/4] bg-muted relative overflow-hidden">
+                  <LazyVideo src={p.src} className="absolute inset-0 h-full w-full" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-transparent" />
+                </div>
+                <div className="mt-4 flex justify-between items-baseline">
+                  <div className="font-display text-xl">{p.name}</div>
+                  <div className="text-sm text-muted-foreground">{p.price}</div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        {/* Tablet/desktop: static reveal grid */}
+        <Stagger className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {FORME_PIECES.map((p) => (
+            <StaggerChild key={p.name}>
               <Link to="/collection" className="group block">
                 <div className="aspect-[3/4] bg-muted relative overflow-hidden">
                   <LazyVideo src={p.src} className="absolute inset-0 h-full w-full transition-transform duration-700 group-hover:scale-[1.07]" />
