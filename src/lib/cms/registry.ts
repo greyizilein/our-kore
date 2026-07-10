@@ -38,8 +38,7 @@ export const PAGES: PageDef[] = [
     blocks: [
       { id: "tagline",       label: "Brand tagline",   multiline: true, wired: true,
         default: "Intelligent casualwear. Architectural tailoring that balances structure with function, precision with comfort. Limited by design. Permanent by intent." },
-      { id: "copy.legal",   label: "Copyright line",  default: `© ${new Date().getFullYear()} KORE: Intelligent Casualwear`, wired: true },
-      { id: "copy.signoff", label: "Sign-off line",   default: "WARDROBE DESIGN SYSTEMS", wired: true },
+      { id: "copy.legal",   label: "Copyright line",  default: `© ${new Date().getFullYear()} KORE. WARDROBE DESIGN SYSTEMS`, wired: true },
     ],
   },
   {
