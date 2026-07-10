@@ -17,10 +17,10 @@ export function SiteFooter() {
   const tagline = usePageText(
     "footer",
     "tagline",
-    "Intelligent casualwear. A small, considered wardrobe that thinks with you — engineered in Lagos, refined for the world.",
+    "Intelligent casualwear. Architectural tailoring that balances structure with function, precision with comfort. Limited by design. Permanent by intent.",
   );
-  const legal = usePageText("footer", "copy.legal", `© ${new Date().getFullYear()} KORE Intelligent Casualwear`);
-  const signoff = usePageText("footer", "copy.signoff", "Built with discipline.");
+  const legal = usePageText("footer", "copy.legal", `© ${new Date().getFullYear()} KORE: Intelligent Casualwear`);
+  const signoff = usePageText("footer", "copy.signoff", "Wardrobe design systems");
 
   return (
     <footer className="mt-32 border-t border-border/40">

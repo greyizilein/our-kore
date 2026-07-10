@@ -17,11 +17,11 @@ export const Route = createFileRoute("/manifesto")({
 });
 
 const TENETS = [
-  { n: "I", t: "Less, made better", b: "We release five pieces a season. Each is engineered to outlast a decade." },
-  { n: "II", t: "The body is the brief", b: "Every cut begins on a moving body, not a static mannequin." },
-  { n: "III", t: "Material before logo", b: "Long-staple fibres, mineral dyes, hardware that patinas. The label sits inside." },
-  { n: "IV", t: "Pay the maker", b: "Living wages, named ateliers, full traceability from fibre to finish." },
-  { n: "V", t: "Repair, don't replace", b: "Lifetime mending. A KORE piece returns to us before it leaves a wardrobe." },
+  { n: "I", t: "Less, is more", b: "We release outfits in collections with minimal choice variants. All are engineered to last, stubbornly." },
+  { n: "II", t: "Your body is the standard", b: "Every cut is precise and made to order. It fits. It's balanced. It feels so... so... very cool." },
+  { n: "III", t: "Real Material Intelligence", b: "Long-staple fibres, mineral dyes, parts that patinas. The customer is the brand. The name is our business." },
+  { n: "IV", t: "Transparent Processes", b: "We favour new artists, a few named ateliers, and provide you full traceability from fibre to finish." },
+  { n: "V", t: "Repair, don't replace", b: "Lifetime mending. We don't restock, we re-create. A KORE damaged product returns home." },
 ];
 
 const SIGN_KEY = "kore.manifesto.signed";
@@ -112,7 +112,11 @@ function SignBook() {
 
 function Page() {
   const eyebrow = usePageText("manifesto", "hero.eyebrow", "The KORE Manifesto");
-  const intro = usePageText("manifesto", "intro", "We started KORE because the closet was full and nothing fit the life inside it. We make clothes for the people who already know what they want — and for the ones learning to.");
+  const intro = usePageText(
+    "manifesto",
+    "intro",
+    "We started KORE because we couldn't find the right thing to wear. Most wardrobes are full but we all have our favourites and we like to wear them out until they're literally worn out—especially for guys who just reach and wear. So we decided to start making clothes for those people: the ones who play favourites and the ones who do but don't yet know why.\n\nthe closet was full and nothing fit the life inside it. We make clothes for the people who already know what they want — and for the ones learning to.",
+  );
   return (
     <SiteShell padTop={false}>
       <PageHero

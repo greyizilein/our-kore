@@ -64,7 +64,7 @@ const TIERS = [
 
 function Page() {
   const eyebrow  = usePageText("membership", "hero.eyebrow",  "Membership");
-  const subtitle = usePageText("membership", "hero.subtitle", "The Circle & memberships. Built around how you wear — and how you want to be known.");
+  const subtitle = usePageText("membership", "hero.subtitle", "The Circle & KORE memberships. Only for those who want to own their privilege, and want to state how they want to be known.");
 
   return (
     <SiteShell padTop={false}>
@@ -177,7 +177,8 @@ function Page() {
           <p className="font-display italic text-xl md:text-2xl font-light leading-[1.5]">
             "Worth is derived from fit, material intelligence, construction, functional utility, and the KORE experience of ownership."
           </p>
-          <p className="mt-6 text-[11px] uppercase tracking-[0.3em] text-accent">— Founder, KORE</p>
+          <p className="mt-6 text-[11px] uppercase tracking-[0.3em] text-accent">Grey, Izilein</p>
+          <p className="mt-1 text-[11px] uppercase tracking-[0.3em] text-muted-foreground">Founder, KORE</p>
         </FadeUp>
       </section>
     </SiteShell>
