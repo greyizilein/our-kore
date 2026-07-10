@@ -25,21 +25,21 @@ const STATS = [
 ];
 
 const FOUNDATIONS = [
-  { n: "01", t: "Structured Cotton", d: "Dense weave construction providing architectural hold and refined drape. The fabric has memory — it holds the cut." },
+  { n: "01", t: "Structured Fit", d: "Dense weave construction providing architectural hold and refined drape. The fabric has memory and retains the cut." },
   { n: "02", t: "Breathability", d: "Thermal regulation through fiber density and natural airflow channels. Wearable across climates without structural compromise." },
-  { n: "03", t: "Durability", d: "Long-life construction methods preserve silhouette integrity. Built for years of wear, not single seasons." },
+  { n: "03", t: "Durability", d: "Long-life construction methods preserve silhouette integrity. Built for years of wear." },
 ];
 
 const PRINCIPLES = [
-  { n: "01", t: "Modular Layering", d: "Every piece interacts with the next through proportion and geometry. Nothing is designed in isolation — the system is the product, not the individual piece." },
-  { n: "02", t: "Precision Cut", d: "Tailored forms designed to create presence without excess. The silhouette is resolved at the pattern stage — not adjusted during production." },
-  { n: "03", t: "Timeless Design", d: "Structural silhouettes that outlast trends. The goal is a garment equally relevant five years after purchase as the day it arrived." },
-  { n: "04", t: "System Logic", d: "Fabric weight, hem length, and proportion are coordinated across the full collection. Wearing KORE means wearing a system — not an outfit assembled from separate choices." },
+  { n: "01", t: "Modular Layering", d: "Every piece interacts with the next through proportion and geometry. Nothing is designed in isolation; the system's design is the KORE product." },
+  { n: "02", t: "Precision Cut", d: "Tailored forms designed to showcase style without excess. The silhouette is resolved at the pattern stage; built from scratch for each person's frame." },
+  { n: "03", t: "Timeless Design", d: "Structural silhouettes that outlast trends. Our KORE designs make each piece as relevant now as it will be fashionable five years later." },
+  { n: "04", t: "System Logic", d: "Fabric weight, hem length, and proportion are coordinated across the full collection. Owning more than two KORE products is a wardrobe system statement." },
 ];
 
 function SystemPage() {
   const heroEyebrow = usePageText("system", "hero.eyebrow", "The System — Forme · Collection I");
-  const heroSubtitle = usePageText("system", "hero.subtitle", "A modular wardrobe architecture. Each piece resolves into the next. Built for longevity, not trends.");
+  const heroSubtitle = usePageText("system", "hero.subtitle", "A modular wardrobe architecture. Each piece resolves into the next. Built for longevity and permanence.");
   const [open, setOpen] = useState(0);
   const reveals = useRef<HTMLDivElement[]>([]);
 
@@ -92,7 +92,7 @@ function SystemPage() {
         <div className="flex flex-col justify-center px-8 md:px-16 py-16">
           <p className="text-[11px] tracking-[0.3em] uppercase text-accent mb-4">Material Intelligence</p>
           <h2 className="font-display text-4xl md:text-6xl font-light leading-[1] mb-6">What it's<br /><em className="text-muted-foreground">made of</em></h2>
-          <p className="text-base text-muted-foreground leading-relaxed mb-8 max-w-md">Every textile is selected for structural performance, tactile quality, and longevity. Fabrics are engineered to work with the cut — not against it. Dense weave. Precise drape. Long-term hold.</p>
+          <p className="text-base text-muted-foreground leading-relaxed mb-8 max-w-md">Every textile is selected for structural performance, tactile quality, and longevity. Fabrics are engineered to work with the cut. Dense weave. Precise cuts.</p>
           <Link to="/collection" className="text-[11px] tracking-[0.25em] uppercase text-foreground border-b border-foreground self-start pb-1 hover:text-accent hover:border-accent transition-colors">See the Pieces →</Link>
         </div>
       </div>
@@ -149,8 +149,8 @@ function SystemPage() {
         </div>
         <div className="relative">
           <p className="text-[11px] tracking-[0.4em] uppercase text-accent mb-6">Forme · Collection I — 2026</p>
-          <h2 className="font-display text-5xl md:text-7xl font-light leading-[0.95] mb-4">Explore<br />the Pieces</h2>
-          <p className="text-sm text-muted-foreground mb-12">Six pieces. One wardrobe logic. No restocks.</p>
+          <h2 className="font-display text-5xl md:text-7xl font-light leading-[0.95] mb-4">Explore<br />The Collection</h2>
+          <p className="text-sm text-muted-foreground mb-12">All collections. One wardrobe logic. Zero restocks.</p>
           <div className="flex gap-3 justify-center flex-wrap">
             <Link to="/collection" className="inline-flex items-center gap-3 bg-foreground text-background px-10 py-4 text-[11px] tracking-[0.28em] uppercase hover:bg-accent transition-colors">View Collection →</Link>
             <Link to="/manifesto" className="inline-flex items-center gap-3 border border-border text-muted-foreground px-10 py-4 text-[11px] tracking-[0.26em] uppercase hover:border-foreground hover:text-foreground transition-colors">Read Manifesto</Link>

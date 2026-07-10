@@ -50,18 +50,18 @@ function Index() {
   const eyebrow    = usePageText("home", "hero.eyebrow",        "SS / 26 — The Forme");
   const heroL1     = usePageText("home", "hero.title.1",        "Intelligent");
   const heroL2     = usePageText("home", "hero.title.2",        "casualwear.");
-  const subhead    = usePageText("home", "hero.subhead",        "A small, considered wardrobe — engineered for the people who already know what they want, and for the ones learning to.");
+  const subhead    = usePageText("home", "hero.subhead",        "Intelligent wardrobe systems: engineered for the people who already know what they want, and for the ones learning to.");
   const ctaPrimary = usePageText("home", "hero.cta.primary",    "Enter the collection");
   const ctaSecondary = usePageText("home", "hero.cta.secondary","Speak to KORE");
   const pillars = [
-    { n: "01", t: usePageText("home", "pillar.1.title", "Considered"),  d: usePageText("home", "pillar.1.body", "Every garment carries intent. Nothing exists to fill a slot — each piece earns its place.") },
-    { n: "02", t: usePageText("home", "pillar.2.title", "Engineered"),  d: usePageText("home", "pillar.2.body", "Cut, fabric and finish are tested for years of wear. Form is the residue of function.") },
-    { n: "03", t: usePageText("home", "pillar.3.title", "Intelligent"), d: usePageText("home", "pillar.3.body", "Your wardrobe learns. Members access KORE — an agent that recommends, holds and tailors.") },
+    { n: "01", t: usePageText("home", "pillar.1.title", "Intelligent"), d: usePageText("home", "pillar.1.body", "Every piece is intentionally functional. Nothing exists for fashion's sake. Each resolves into the next.") },
+    { n: "02", t: usePageText("home", "pillar.2.title", "Engineered"),  d: usePageText("home", "pillar.2.body", "Cut, fabric and finish are tested for years of wear. Our form is the residue of function.") },
+    { n: "03", t: usePageText("home", "pillar.3.title", "Luxurious"),   d: usePageText("home", "pillar.3.body", "Each collection is released periodically. Each piece is intentional. User-Specific. Non-replicable.") },
   ];
-  const founderQuote = usePageText("home", "founder.quote", "Worth is derived from fit, material intelligence, construction, functional utility, and the KORE experience of ownership. Each KORE member owns an exclusive work of art that no one else walking the gallery of this world will ever own. And that is the true meaning of luxury.");
+  const founderQuote = usePageText("home", "founder.quote", "Worth is derived from fit, material intelligence, construction, functional utility, and the KORE experience of ownership. Only 1 out of every 44 million people on Earth will ever own KORE, and we're fine with that. We don't intend to be popular; we want to sell perfectly good clothes that'll last a really long time.");
   const memEyebrow = usePageText("home", "membership.eyebrow", "Membership");
   const memTitle   = usePageText("home", "membership.title",   "For the wardrobe you'll keep ten years.");
-  const memBody    = usePageText("home", "membership.body",    "Members access new collections first, discounted repairs, and a personal agent — KORE — that holds your sizes, your preferences and your taste.");
+  const memBody    = usePageText("home", "membership.body",    "Members access new collections, discounted repairs, recraftings upon damage, and access to special editions ever open to a global 25-member circle. All in fit sizes, personal preferences and the KORE-class taste.");
   const memCta     = usePageText("home", "membership.cta",     "Become a member");
 
   return (
@@ -128,11 +128,11 @@ function Index() {
           <div className="py-3 flex gap-12 whitespace-nowrap text-[10px] font-mono uppercase tracking-[0.3em] text-muted-foreground animate-[scroll_40s_linear_infinite]">
             {Array.from({ length: 6 }).map((_, i) => (
               <span key={i} className="flex gap-12">
-                <span>· Considered ·</span>
-                <span>· Engineered in Lagos ·</span>
-                <span>· Made to outlast trends ·</span>
-                <span>· Limited collections ·</span>
-                <span>· Members first ·</span>
+                <span>· Modular layering ·</span>
+                <span>· Limited production ·</span>
+                <span>· Engineered for form ·</span>
+                <span>· Architectural cut ·</span>
+                <span>· Wardrobe systems ·</span>
               </span>
             ))}
           </div>
@@ -252,7 +252,8 @@ function Index() {
           <p className="font-display italic text-sm md:text-base font-light leading-relaxed text-foreground/80">
             "{founderQuote}"
           </p>
-          <p className="mt-4 text-[10px] uppercase tracking-[0.3em] text-accent">— Founder, KORE</p>
+          <p className="mt-4 text-[10px] uppercase tracking-[0.3em] text-accent">Grey, Izilein</p>
+          <p className="mt-1 text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Founder, KORE</p>
         </div>
       </FadeUp>
 

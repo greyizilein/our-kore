@@ -23,8 +23,8 @@ export const Route = createFileRoute("/collection/")({
 
 function GalleryPage() {
   const cEyebrow  = usePageText("collection", "hero.eyebrow",  "The House — Collections");
-  const cTitle    = usePageText("collection", "hero.title",    "A gallery of chapters, not seasons.");
-  const cSubtitle = usePageText("collection", "hero.subtitle", "Each collection is a small, finished set. Walk through them as you would a room of works.");
+  const cTitle    = usePageText("collection", "hero.title",    "A gallery of art, worn daily.");
+  const cSubtitle = usePageText("collection", "hero.subtitle", "KORE offers four major collections with limited variants under each collection. Each variant is released to complement the other.");
   const fetchContent = useServerFn(getSiteContent);
   const [collections, setCollections] = useState<CollectionSet[]>(DEFAULT_COLLECTIONS);
 
