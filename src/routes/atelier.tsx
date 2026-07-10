@@ -26,7 +26,7 @@ function Page() {
   const intro = usePageText(
     "atelier",
     "intro",
-    "Every KORE product is designed to fit. One variant of each collection is made available at a thin limit. Only about 1 in 44 million people will ever own a KORE.\n\nThe product information is only accessible to the KORE owner and can be passed down across generations. Once a variant has reached limit production number, we cease creating that KORE. But all created versions can be recreated over and over again with the exact same specifications.\n\nSo, a parent can will their KORE to a child and the product can continually be redesigned throughout that child's lifetime.",
+    "Every KORE product is designed to fit. One variant of each collection is made available at a thin limit. Only about 1 in 44 million people will ever own a KORE.\n\nThe product information is only accessible to the KORE owner and can be passed down across generations. Once a variant has reached limit production number, we cease creating that KORE. But all created versions can be recreated over and over again with the exact same specifications.\n\nSo, a parent can will their KORE to their child, and the product can continually be redesigned to fit, throughout that child's lifetime.",
   );
   const quote = usePageText("atelier", "quote", "KORE is ushering in a new era of ownership. Once you own your KORE, no one else will ever own an identical KORE product.");
   return (

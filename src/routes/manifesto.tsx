@@ -115,7 +115,7 @@ function Page() {
   const intro = usePageText(
     "manifesto",
     "intro",
-    "We started KORE because we couldn't find the right thing to wear. Most wardrobes are full but we all have our favourites and we like to wear them out until they're literally worn out—especially for guys who just reach and wear. So we decided to start making clothes for those people: the ones who play favourites and the ones who do but don't yet know why.\n\nthe closet was full and nothing fit the life inside it. We make clothes for the people who already know what they want — and for the ones learning to.",
+    "We started KORE because we couldn't find the right thing to wear. Most wardrobes are full but we all have our favourites and we like to wear them out until they're literally worn out—especially for guys who just reach and wear. So we decided to start making clothes for those people: the ones who play favourites and the ones who do but don't yet know why.",
   );
   return (
     <SiteShell padTop={false}>

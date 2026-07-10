@@ -39,7 +39,7 @@ export const PAGES: PageDef[] = [
       { id: "tagline",       label: "Brand tagline",   multiline: true, wired: true,
         default: "Intelligent casualwear. Architectural tailoring that balances structure with function, precision with comfort. Limited by design. Permanent by intent." },
       { id: "copy.legal",   label: "Copyright line",  default: `© ${new Date().getFullYear()} KORE: Intelligent Casualwear`, wired: true },
-      { id: "copy.signoff", label: "Sign-off line",   default: "Wardrobe design systems", wired: true },
+      { id: "copy.signoff", label: "Sign-off line",   default: "Wardrobe Design Systems", wired: true },
     ],
   },
   {
@@ -80,7 +80,7 @@ export const PAGES: PageDef[] = [
     blocks: [
       { id: "hero.eyebrow", label: "Hero eyebrow",        default: "The KORE Manifesto", wired: true },
       { id: "intro",        label: "Intro paragraph",     multiline: true, wired: true,
-        default: "We started KORE because we couldn't find the right thing to wear. Most wardrobes are full but we all have our favourites and we like to wear them out until they're literally worn out—especially for guys who just reach and wear. So we decided to start making clothes for those people: the ones who play favourites and the ones who do but don't yet know why.\n\nthe closet was full and nothing fit the life inside it. We make clothes for the people who already know what they want — and for the ones learning to." },
+        default: "We started KORE because we couldn't find the right thing to wear. Most wardrobes are full but we all have our favourites and we like to wear them out until they're literally worn out—especially for guys who just reach and wear. So we decided to start making clothes for those people: the ones who play favourites and the ones who do but don't yet know why." },
       { id: "sign.title",   label: "Sign-the-book title", default: "Add your name to the principles. Hold the house to them.", wired: true },
     ],
   },
@@ -93,7 +93,7 @@ export const PAGES: PageDef[] = [
       { id: "hero.subtitle", label: "Hero subtitle",  multiline: true, wired: true,
         default: "Every KORE piece carries its maker. Four houses, three continents, paid above market." },
       { id: "intro",         label: "Intro paragraph", multiline: true, wired: true,
-        default: "Every KORE product is designed to fit. One variant of each collection is made available at a thin limit. Only about 1 in 44 million people will ever own a KORE.\n\nThe product information is only accessible to the KORE owner and can be passed down across generations. Once a variant has reached limit production number, we cease creating that KORE. But all created versions can be recreated over and over again with the exact same specifications.\n\nSo, a parent can will their KORE to a child and the product can continually be redesigned throughout that child's lifetime." },
+        default: "Every KORE product is designed to fit. One variant of each collection is made available at a thin limit. Only about 1 in 44 million people will ever own a KORE.\n\nThe product information is only accessible to the KORE owner and can be passed down across generations. Once a variant has reached limit production number, we cease creating that KORE. But all created versions can be recreated over and over again with the exact same specifications.\n\nSo, a parent can will their KORE to their child, and the product can continually be redesigned to fit, throughout that child's lifetime." },
       { id: "quote",         label: "Closing quote",   multiline: true, wired: true,
         default: "KORE is ushering in a new era of ownership. Once you own your KORE, no one else will ever own an identical KORE product." },
     ],
