@@ -19,8 +19,7 @@ export function SiteFooter() {
     "tagline",
     "Intelligent casualwear. Architectural tailoring that balances structure with function, precision with comfort. Limited by design. Permanent by intent.",
   );
-  const legal = usePageText("footer", "copy.legal", `© ${new Date().getFullYear()} KORE: Intelligent Casualwear`);
-  const signoff = usePageText("footer", "copy.signoff", "WARDROBE DESIGN SYSTEMS");
+  const legal = usePageText("footer", "copy.legal", `© ${new Date().getFullYear()} KORE. WARDROBE DESIGN SYSTEMS`);
 
   return (
     <footer className="mt-32 border-t border-border/40">
@@ -48,9 +47,8 @@ export function SiteFooter() {
         </div>
       </div>
       <div className="border-t border-border/40">
-        <div className="mx-auto max-w-[1600px] px-6 lg:px-10 py-6 flex flex-col md:flex-row gap-3 justify-between text-[10px] font-mono uppercase tracking-[0.22em] text-muted-foreground">
+        <div className="mx-auto max-w-[1600px] px-6 lg:px-10 py-6 text-[10px] font-mono uppercase tracking-[0.22em] text-muted-foreground">
           <span>{legal}</span>
-          <span>{signoff}</span>
         </div>
       </div>
     </footer>
