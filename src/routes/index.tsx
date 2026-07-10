@@ -142,7 +142,7 @@ function Index() {
       {/* PILLARS */}
       <div className="relative overflow-hidden">
         <div aria-hidden className="absolute inset-0 grid place-items-center pointer-events-none select-none">
-          <span className="font-display text-[clamp(8rem,20vw,24rem)] font-light text-transparent [-webkit-text-stroke:1px_var(--border)]">KORE</span>
+          <span className="font-display leading-none font-light text-transparent [-webkit-text-stroke:1px_var(--border)] rotate-90 text-[26vh] sm:rotate-0 sm:text-[clamp(8rem,20vw,24rem)]">KORE</span>
         </div>
         <Stagger className="relative mx-auto max-w-[1600px] px-6 lg:px-10 py-32 grid gap-16 lg:grid-cols-3">
           {pillars.map((p) => (
