@@ -156,13 +156,13 @@ function Index() {
           </Link>
         </FadeUp>
 
-        <Stagger className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <Stagger className="flex overflow-x-auto scrollbar-none snap-x snap-mandatory gap-5 -mx-6 px-6 pb-2 sm:grid sm:grid-cols-2 sm:gap-6 sm:mx-0 sm:px-0 sm:pb-0 sm:overflow-visible sm:snap-none lg:grid-cols-3">
           {[
             { src: "/v-theme/reel1.mp4", name: "Field Overcoat", price: "₦ 285,000" },
             { src: "/v-theme/reel2.mp4", name: "Atelier Trouser", price: "₦ 142,000" },
             { src: "/v-theme/reel3.mp4", name: "Considered Knit", price: "₦ 98,000" },
           ].map((p) => (
-            <StaggerChild key={p.name}>
+            <StaggerChild key={p.name} className="shrink-0 w-[82%] snap-start sm:w-auto sm:shrink">
               <Link to="/collection" className="group block">
                 <div className="aspect-[3/4] bg-muted relative overflow-hidden">
                   <LazyVideo src={p.src} className="absolute inset-0 h-full w-full transition-transform duration-700 group-hover:scale-[1.07]" />
