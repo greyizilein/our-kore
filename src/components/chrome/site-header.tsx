@@ -1,4 +1,4 @@
-import { Link, useLocation } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/lib/auth/auth-context";
@@ -6,7 +6,6 @@ import { useCartCount } from "@/lib/cart-store";
 import { supabase } from "@/integrations/kore-supabase/client";
 import { piecesForVariant } from "@/lib/collections";
 import { ThemeSwitch } from "./theme-switch";
-import { usePageText } from "@/lib/cms/page-content";
 
 const NAV = [
   { to: "/collection", label: "Collection" },
@@ -63,15 +62,10 @@ function useInventoryCount() {
 
 export function SiteHeader() {
   const { user } = useAuth();
-  const { pathname } = useLocation();
   const [open, setOpen] = useState(false);
-  const isHome = pathname === "/";
   const cartCount = useCartCount();
   const inventoryCount = useInventoryCount();
   const romanCount = toRoman(inventoryCount);
-  const statusLeft = usePageText("header", "status.left", "SS / 26 — FORME");
-  const statusCenter = usePageText("header", "status.center", "LAGOS · LONDON · TOKYO");
-  const statusRight = usePageText("header", "status.right", "SHIPPING WORLDWIDE");
 
   return (
     <header className="fixed inset-x-0 top-0 z-40 backdrop-blur-md bg-background/70 border-b border-border/40">
@@ -205,17 +199,6 @@ export function SiteHeader() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Subtle status line — ode to terminal aesthetic */}
-      {isHome && (
-        <div className="hidden lg:block border-t border-border/30">
-          <div className="mx-auto max-w-[1600px] px-10 py-1 flex justify-between text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground">
-            <span>{statusLeft}</span>
-            <span>{statusCenter}</span>
-            <span>{statusRight}</span>
-          </div>
-        </div>
-      )}
     </header>
   );
 }

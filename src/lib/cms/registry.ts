@@ -22,16 +22,6 @@ export type PageDef = {
 
 export const PAGES: PageDef[] = [
   {
-    id: "header",
-    label: "Header",
-    group: "Chrome",
-    blocks: [
-      { id: "status.left",   label: "Status line — left",   default: "SS / 26 — FORME", wired: true },
-      { id: "status.center", label: "Status line — center", default: "LAGOS · LONDON · TOKYO", wired: true },
-      { id: "status.right",  label: "Status line — right",  default: "SHIPPING WORLDWIDE", wired: true },
-    ],
-  },
-  {
     id: "footer",
     label: "Footer",
     group: "Chrome",

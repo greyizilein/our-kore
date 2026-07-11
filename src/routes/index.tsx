@@ -81,6 +81,14 @@ function Index() {
           >
             {eyebrow}
           </motion.p>
+          <motion.p
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.1 }}
+            className="mt-2 text-[9px] sm:text-[10px] font-mono uppercase tracking-[0.25em] text-muted-foreground/60"
+          >
+            Shipping worldwide
+          </motion.p>
 
           <motion.h1
             initial={{ opacity: 0, y: 16 }}
