@@ -58,7 +58,7 @@ function SystemPage() {
     <SiteShell padTop={false}>
       {/* HERO */}
       <section className="relative h-[100svh] overflow-hidden flex flex-col justify-end px-6 md:px-12 pb-20">
-        <LazyVideo src="/media/walk.mp4" className="absolute inset-0 h-full w-full opacity-60" />
+        <LazyVideo src="/media/walk.mp4" className="absolute inset-0 h-full w-full opacity-60" preload="auto" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_70%,color-mix(in_srgb,var(--accent)_18%,transparent),transparent_60%)]" />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
         <div className="absolute right-6 md:right-12 top-1/2 -translate-y-1/2 [writing-mode:vertical-lr] text-[10px] tracking-[0.3em] uppercase text-muted-foreground">Scroll ↓</div>
