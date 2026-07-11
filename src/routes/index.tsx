@@ -150,7 +150,7 @@ function Index() {
       {/* PILLARS */}
       <div className="relative overflow-hidden">
         <div aria-hidden className="absolute inset-0 grid place-items-center pointer-events-none select-none">
-          <span className="block font-display leading-none font-light text-transparent [-webkit-text-stroke:1px_var(--border)] text-[26vh] sm:text-[clamp(8rem,20vw,24rem)] [will-change:transform,opacity] animate-[koreLiveMobile_10s_ease-in-out_infinite] sm:animate-[koreLiveDesktop_10s_ease-in-out_infinite]">KORE</span>
+          <span className="block font-display leading-none font-light text-transparent [-webkit-text-stroke:1px_var(--border)] text-[26vh] sm:text-[clamp(8rem,20vw,24rem)] rotate-90 sm:rotate-0 animate-[koreLive_10s_ease-in-out_infinite]">KORE</span>
         </div>
         <Stagger className="relative mx-auto max-w-[1600px] px-6 lg:px-10 py-32 grid gap-16 lg:grid-cols-3">
           {pillars.map((p) => (
@@ -294,13 +294,9 @@ function Index() {
           from { transform: translateX(0); }
           to { transform: translateX(-50%); }
         }
-        @keyframes koreLiveDesktop {
-          0%, 100% { transform: translateX(0); opacity: 0.85; }
-          50% { transform: translateX(-1.5%); opacity: 1; }
-        }
-        @keyframes koreLiveMobile {
-          0%, 100% { transform: rotate(90deg) translateX(0); opacity: 0.85; }
-          50% { transform: rotate(90deg) translateX(1.5%); opacity: 1; }
+        @keyframes koreLive {
+          0%, 100% { opacity: 0.7; }
+          50% { opacity: 1; }
         }
       `}</style>
     </SiteShell>
