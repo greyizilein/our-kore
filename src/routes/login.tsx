@@ -72,14 +72,14 @@ function Page() {
     <div className="relative min-h-screen overflow-hidden bg-background">
       {/* Mobile: full-screen video background */}
       <div className="md:hidden absolute inset-0">
-        <LazyVideo src="/media/silhouette.mp4" className="absolute inset-0 h-full w-full" />
+        <LazyVideo src="/media/silhouette.mp4" className="absolute inset-0 h-full w-full" preload="auto" />
         <div className="absolute inset-0 bg-black/65" />
       </div>
 
       <div className="relative z-10 grid md:grid-cols-2 min-h-screen">
         {/* Desktop left panel: video */}
         <div className="relative hidden md:block bg-black overflow-hidden">
-          <LazyVideo src="/media/silhouette.mp4" className="absolute inset-0 h-full w-full" />
+          <LazyVideo src="/media/silhouette.mp4" className="absolute inset-0 h-full w-full" preload="auto" />
           <div className="absolute inset-0 bg-gradient-to-br from-background/40 via-transparent to-background/40" />
           <div className="absolute top-12 left-12 font-display text-7xl text-foreground/15">{mode === "signup" ? "02" : "01"}</div>
           <div className="absolute bottom-12 left-12 right-12">

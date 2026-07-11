@@ -26,7 +26,7 @@ export function PageHero({
   return (
     <section className={`relative ${height} overflow-hidden flex items-end`}>
       {isVideo ? (
-        <LazyVideo src={media} className="absolute inset-0 h-full w-full" />
+        <LazyVideo src={media} className="absolute inset-0 h-full w-full" preload="auto" />
       ) : (
         <div
           className="absolute inset-0 bg-cover bg-center"
