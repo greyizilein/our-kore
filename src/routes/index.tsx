@@ -124,7 +124,7 @@ function Index() {
         </div>
 
         {/* Marquee strip */}
-        <div className="absolute bottom-0 inset-x-0 border-t border-border/40 overflow-hidden">
+        <div className="absolute bottom-0 inset-x-0 overflow-hidden">
           <div className="py-3 flex gap-12 whitespace-nowrap text-[10px] font-mono uppercase tracking-[0.3em] text-muted-foreground animate-[scroll_40s_linear_infinite]">
             {Array.from({ length: 6 }).map((_, i) => (
               <span key={i} className="flex gap-12">
