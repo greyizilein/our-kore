@@ -7,7 +7,7 @@ import { useAuth } from "@/lib/auth/auth-context";
 import { cn } from "@/lib/utils";
 import {
   adminWhoAmI, adminStats, adminListOrders, adminListMembers,
-  adminListProducts, adminUpsertProduct, adminDeleteProduct, adminExportAll,
+  adminListProducts, adminUpsertProduct, adminDeleteProduct, adminUploadProductImage, adminExportAll,
   adminUpsertInventory, adminDeleteInventoryItem, getInventory,
   adminListMemberPieces, adminUpsertMemberPiece, adminDeleteMemberPiece,
 } from "@/lib/admin.functions";
@@ -347,53 +347,116 @@ function Products({ token, flash }: { token: string; flash: (m: string) => void 
   const list = useServerFn(adminListProducts);
   const upsert = useServerFn(adminUpsertProduct);
   const del = useServerFn(adminDeleteProduct);
+  const uploadImage = useServerFn(adminUploadProductImage);
   const [rows, setRows] = useState<any[]>([]);
   const [editing, setEditing] = useState<any | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   const reload = () => list({ data: { token } }).then((r) => setRows(r.products));
   useEffect(() => { reload(); /* eslint-disable-next-line */ }, [token]);
 
+  const blank = () => ({
+    slug: "", series: "FORMME I", name: "", number: "", collection_slug: "forme",
+    variant_slug: "forme-i", category: "set", price_ngn: 0, currency: "NGN",
+    status: "draft", sort_order: rows.length + 1, description: "", material: "",
+    origin: "Designed by KORE · made to order", sizes: ["XS", "S", "M", "L", "XL"],
+    colorways: [], images: [], featured: false, is_new: false,
+  });
+
   const save = async (p: any) => {
+    if (!p.name?.trim() || !p.slug?.trim()) { flash("Name and URL slug are required."); return; }
+    if (!Array.isArray(p.images) || p.images.length === 0) { flash("Add at least one product image."); return; }
+    setBusy(true);
     try {
       await upsert({ data: { token, product: {
-        id: p.id, series: p.series, name: p.name, price_ngn: Number(p.price_ngn),
-        status: p.status, sort_order: Number(p.sort_order), description: p.description, material: p.material,
+        id: p.id, slug: p.slug, series: p.series, name: p.name, number: p.number,
+        collection_slug: p.collection_slug, variant_slug: p.variant_slug, category: p.category,
+        price_ngn: Number(p.price_ngn), currency: p.currency || "NGN", status: p.status,
+        sort_order: Number(p.sort_order), description: p.description, material: p.material,
+        origin: p.origin, sizes: p.sizes || [], colorways: p.colorways || [], images: p.images || [],
+        hero: p.images?.[0], featured: !!p.featured, is_new: !!p.is_new,
       }}});
-      flash("Saved.");
+      flash("Product saved and published to the catalogue.");
       setEditing(null);
-      reload();
+      await reload();
     } catch (e: any) { flash(e.message || "Save failed"); }
+    finally { setBusy(false); }
   };
 
-  const remove = async (id: string) => {
-    if (!confirm("Delete this product?")) return;
-    try { await del({ data: { token, id } }); flash("Deleted."); reload(); }
-    catch (e: any) { flash(e.message || "Delete failed"); }
+  const remove = async (p: any) => {
+    if (!confirm(`Delete "${p.name}"?`)) return;
+    try {
+      await del({ data: { token, id: p.id || p.slug, slug: p.slug } });
+      flash("Deleted.");
+      await reload();
+    } catch (e: any) { flash(e.message || "Delete failed"); }
+  };
+
+  const uploadFiles = async (files: FileList | File[]) => {
+    const selected = Array.from(files);
+    if (!selected.length) return;
+    setUploading(true);
+    try {
+      for (const file of selected) {
+        if (file.size > 5 * 1024 * 1024) throw new Error(`${file.name} is larger than 5 MB.`);
+        const bytes = new Uint8Array(await file.arrayBuffer());
+        let binary = "";
+        for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+        const { url } = await uploadImage({
+          data: {
+            token,
+            product_slug: editing?.slug || "unassigned-product",
+            filename: file.name,
+            data_base64: btoa(binary),
+            content_type: file.type,
+          },
+        });
+        setEditing((current: any) => ({ ...current, images: [...(current?.images || []), url] }));
+      }
+      flash(`${selected.length} image${selected.length === 1 ? "" : "s"} uploaded.`);
+    } catch (e: any) { flash(e.message || "Image upload failed"); }
+    finally { setUploading(false); }
+  };
+
+  const moveImage = (index: number, direction: -1 | 1) => {
+    setEditing((current: any) => {
+      const images = [...(current.images || [])];
+      const nextIndex = index + direction;
+      if (nextIndex < 0 || nextIndex >= images.length) return current;
+      [images[index], images[nextIndex]] = [images[nextIndex], images[index]];
+      return { ...current, images };
+    });
   };
 
   return (
     <div>
-      <Header eyebrow="Catalogue" title={<>Edit <em>products</em></>} />
+      <Header
+        eyebrow="Catalogue"
+        title={<>Edit <em>products</em></>}
+        sub="Add complete products, upload and order their images, set colourways and publish them directly to the collection."
+      />
       <div className="flex justify-end mb-4">
-        <button onClick={() => setEditing({ series: "", name: "", price_ngn: 0, status: "draft", sort_order: rows.length + 1 })}
+        <button onClick={() => setEditing(blank())}
           className="px-4 py-2 bg-foreground text-background text-[11px] tracking-[0.2em] uppercase">+ New product</button>
       </div>
 
       <div className="border border-border overflow-x-auto">
-        <table className="w-full text-sm min-w-[640px]">
+        <table className="w-full text-sm min-w-[720px]">
           <thead className="bg-muted/30 text-[10px] tracking-[0.18em] uppercase text-muted-foreground">
-            <tr><th className="text-left p-3">Series</th><th className="text-left p-3">Name</th><th className="text-right p-3">Price (NGN)</th><th className="text-left p-3">Status</th><th className="p-3"></th></tr>
+            <tr><th className="text-left p-3">Image</th><th className="text-left p-3">Series</th><th className="text-left p-3">Name</th><th className="text-right p-3">Price</th><th className="text-left p-3">Status</th><th className="p-3"></th></tr>
           </thead>
           <tbody>
             {rows.map((p) => (
-              <tr key={p.id} className="border-t border-border">
+              <tr key={p.id || p.slug} className="border-t border-border">
+                <td className="p-3">{p.images?.[0] ? <img src={p.images[0]} alt="" className="h-14 w-11 object-cover bg-muted" /> : <span className="text-xs text-muted-foreground">No image</span>}</td>
                 <td className="p-3">{p.series}</td>
-                <td className="p-3">{p.name}</td>
-                <td className="p-3 text-right">{Number(p.price_ngn).toLocaleString()}</td>
+                <td className="p-3"><p>{p.name}</p><p className="text-[10px] text-muted-foreground">/{p.slug || "no-slug"}</p></td>
+                <td className="p-3 text-right">₦{Number(p.price_ngn).toLocaleString("en-NG")}</td>
                 <td className="p-3"><span className="text-[10px] tracking-[0.18em] uppercase text-accent">{p.status}</span></td>
                 <td className="p-3 text-right space-x-3">
-                  <button onClick={() => setEditing(p)} className="text-xs text-muted-foreground hover:text-foreground">Edit</button>
-                  <button onClick={() => remove(p.id)} className="text-xs text-muted-foreground hover:text-destructive">Delete</button>
+                  <button onClick={() => setEditing({ ...blank(), ...p })} className="text-xs text-muted-foreground hover:text-foreground">Edit</button>
+                  <button onClick={() => remove(p)} className="text-xs text-muted-foreground hover:text-destructive">Delete</button>
                 </td>
               </tr>
             ))}
@@ -402,28 +465,105 @@ function Products({ token, flash }: { token: string; flash: (m: string) => void 
       </div>
 
       {editing && (
-        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur grid place-items-center p-4">
-          <div className="bg-background border border-border max-w-lg w-full p-6">
-            <h3 className="font-display text-2xl font-light mb-6">{editing.id ? "Edit product" : "New product"}</h3>
-            <div className="space-y-3">
-              {(["series", "name", "description", "material"] as const).map((k) => (
-                <Field key={k} label={k} value={editing[k] ?? ""} onChange={(v) => setEditing({ ...editing, [k]: v })} />
-              ))}
-              <Field label="Price (NGN minor)" type="number" value={String(editing.price_ngn ?? 0)} onChange={(v) => setEditing({ ...editing, price_ngn: v })} />
-              <Field label="Sort order" type="number" value={String(editing.sort_order ?? 0)} onChange={(v) => setEditing({ ...editing, sort_order: v })} />
+        <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur overflow-y-auto p-4 md:p-8">
+          <div className="bg-background border border-border max-w-5xl mx-auto p-5 sm:p-7">
+            <div className="flex items-start justify-between gap-4 mb-7">
               <div>
-                <label className="block text-[10px] tracking-[0.2em] uppercase text-muted-foreground mb-1">Status</label>
-                <select value={editing.status} onChange={(e) => setEditing({ ...editing, status: e.target.value })}
-                  className="w-full px-3 py-2 bg-background border border-border text-sm">
-                  <option value="draft">draft</option>
-                  <option value="live">live</option>
-                  <option value="archived">archived</option>
+                <p className="text-[10px] tracking-[0.2em] uppercase text-accent mb-2">Catalogue product</p>
+                <h3 className="font-display text-3xl font-light">{editing.id ? "Edit product" : "New product"}</h3>
+              </div>
+              <button onClick={() => setEditing(null)} className="text-sm text-muted-foreground hover:text-foreground">✕</button>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-4">
+              <Field label="Product name" value={editing.name ?? ""} onChange={(v) => setEditing({ ...editing, name: v })} />
+              <Field label="URL slug" value={editing.slug ?? ""} onChange={(v) => setEditing({ ...editing, slug: v.toLowerCase().replace(/[^a-z0-9-]/g, "-") })} />
+              <Field label="Series / collection label" value={editing.series ?? ""} onChange={(v) => setEditing({ ...editing, series: v })} />
+              <Field label="Piece number" value={editing.number ?? ""} onChange={(v) => setEditing({ ...editing, number: v })} />
+              <Field label="Collection slug" value={editing.collection_slug ?? "forme"} onChange={(v) => setEditing({ ...editing, collection_slug: v })} />
+              <Field label="Variant slug" value={editing.variant_slug ?? "forme-i"} onChange={(v) => setEditing({ ...editing, variant_slug: v })} />
+              <div>
+                <label className="block text-[10px] tracking-[0.2em] uppercase text-muted-foreground mb-1">Category</label>
+                <select value={editing.category || "set"} onChange={(e) => setEditing({ ...editing, category: e.target.value })} className="w-full px-3 py-2 bg-background border border-border text-sm">
+                  {["set", "outer", "shirt", "trouser", "knit", "object"].map((category) => <option key={category} value={category}>{category}</option>)}
                 </select>
               </div>
+              <Field label="Price (NGN)" type="number" value={String(editing.price_ngn ?? 0)} onChange={(v) => setEditing({ ...editing, price_ngn: v })} />
+              <Field label="Material" value={editing.material ?? ""} onChange={(v) => setEditing({ ...editing, material: v })} />
+              <Field label="Origin / production note" value={editing.origin ?? ""} onChange={(v) => setEditing({ ...editing, origin: v })} />
+              <Field label="Sizes (comma-separated)" value={(editing.sizes || []).join(", ")} onChange={(v) => setEditing({ ...editing, sizes: v.split(",").map((x) => x.trim()).filter(Boolean) })} />
+              <Field label="Sort order" type="number" value={String(editing.sort_order ?? 0)} onChange={(v) => setEditing({ ...editing, sort_order: v })} />
             </div>
-            <div className="flex gap-3 justify-end mt-6">
+
+            <div className="mt-4">
+              <label className="block text-[10px] tracking-[0.2em] uppercase text-muted-foreground mb-1">Description</label>
+              <textarea value={editing.description ?? ""} onChange={(e) => setEditing({ ...editing, description: e.target.value })} rows={4} className="w-full px-3 py-2 bg-background border border-border text-sm resize-y" />
+            </div>
+
+            <div className="mt-7 border-t border-border pt-6">
+              <div className="flex flex-wrap items-end justify-between gap-3 mb-4">
+                <div>
+                  <p className="text-[10px] tracking-[0.2em] uppercase text-muted-foreground">Product images</p>
+                  <p className="text-xs text-muted-foreground mt-1">The first image is the cover. Dragging is not required: use the arrows to change the order.</p>
+                </div>
+                <label className="cursor-pointer px-4 py-2 border border-foreground text-[10px] tracking-[0.18em] uppercase hover:bg-foreground hover:text-background transition-colors">
+                  {uploading ? "Uploading…" : "+ Upload images"}
+                  <input type="file" multiple accept="image/jpeg,image/png,image/webp,image/avif" disabled={uploading} onChange={(e) => { if (e.target.files) uploadFiles(e.target.files); e.currentTarget.value = ""; }} className="sr-only" />
+                </label>
+              </div>
+              {(editing.images || []).length === 0 ? (
+                <div className="border border-dashed border-border p-10 text-center text-sm text-muted-foreground">No images yet. Upload the product photographs here.</div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                  {(editing.images || []).map((src: string, index: number) => (
+                    <div key={`${src}-${index}`} className="border border-border bg-muted/20 p-2">
+                      <div className="relative aspect-[3/4] overflow-hidden bg-muted">
+                        <img src={src} alt="" className="absolute inset-0 h-full w-full object-cover" />
+                        {index === 0 && <span className="absolute top-2 left-2 bg-accent text-accent-foreground px-2 py-1 text-[9px] tracking-[0.15em] uppercase">Cover</span>}
+                      </div>
+                      <div className="grid grid-cols-3 gap-1 mt-2">
+                        <button disabled={index === 0} onClick={() => moveImage(index, -1)} className="border border-border py-1 text-xs disabled:opacity-25">←</button>
+                        <button disabled={index === editing.images.length - 1} onClick={() => moveImage(index, 1)} className="border border-border py-1 text-xs disabled:opacity-25">→</button>
+                        <button onClick={() => setEditing({ ...editing, images: editing.images.filter((_: string, i: number) => i !== index) })} className="border border-border py-1 text-xs text-destructive">✕</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="mt-7 border-t border-border pt-6">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-[10px] tracking-[0.2em] uppercase text-muted-foreground">Colourways</p>
+                <button onClick={() => setEditing({ ...editing, colorways: [...(editing.colorways || []), { name: "", hex: "#777777" }] })} className="text-[10px] tracking-[0.18em] uppercase text-accent">+ Add colour</button>
+              </div>
+              <div className="space-y-2">
+                {(editing.colorways || []).map((colour: any, index: number) => (
+                  <div key={index} className="grid grid-cols-[3rem_1fr_auto] gap-2 items-center">
+                    <input type="color" value={colour.hex || "#777777"} onChange={(e) => { const next = [...editing.colorways]; next[index] = { ...colour, hex: e.target.value }; setEditing({ ...editing, colorways: next }); }} className="w-12 h-10 bg-transparent border border-border p-1" />
+                    <input value={colour.name || ""} onChange={(e) => { const next = [...editing.colorways]; next[index] = { ...colour, name: e.target.value }; setEditing({ ...editing, colorways: next }); }} placeholder="Colour name" className="w-full px-3 py-2 bg-background border border-border text-sm" />
+                    <button onClick={() => setEditing({ ...editing, colorways: editing.colorways.filter((_: any, i: number) => i !== index) })} className="px-3 py-2 text-destructive text-xs">Remove</button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-7 grid sm:grid-cols-3 gap-3 border-t border-border pt-6">
+              <div>
+                <label className="block text-[10px] tracking-[0.2em] uppercase text-muted-foreground mb-1">Status</label>
+                <select value={editing.status} onChange={(e) => setEditing({ ...editing, status: e.target.value })} className="w-full px-3 py-2 bg-background border border-border text-sm">
+                  <option value="draft">Draft</option>
+                  <option value="live">Live</option>
+                  <option value="archived">Archived</option>
+                </select>
+              </div>
+              <label className="flex items-center gap-2 text-sm pt-6"><input type="checkbox" checked={!!editing.is_new} onChange={(e) => setEditing({ ...editing, is_new: e.target.checked })} /> New Release badge</label>
+              <label className="flex items-center gap-2 text-sm pt-6"><input type="checkbox" checked={!!editing.featured} onChange={(e) => setEditing({ ...editing, featured: e.target.checked })} /> Featured product</label>
+            </div>
+
+            <div className="flex gap-3 justify-end mt-8 border-t border-border pt-5">
               <button onClick={() => setEditing(null)} className="px-4 py-2 text-[11px] tracking-[0.2em] uppercase text-muted-foreground">Cancel</button>
-              <button onClick={() => save(editing)} className="px-5 py-2 bg-foreground text-background text-[11px] tracking-[0.2em] uppercase">Save</button>
+              <button onClick={() => save(editing)} disabled={busy || uploading} className="px-5 py-2 bg-foreground text-background text-[11px] tracking-[0.2em] uppercase disabled:opacity-50">{busy ? "Saving…" : "Save product"}</button>
             </div>
           </div>
         </div>

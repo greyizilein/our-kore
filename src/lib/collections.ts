@@ -37,37 +37,37 @@ export type CollectionSet = {
 
 // Default variants for FORME — every clothing piece currently belongs to Forme I.
 const FORME_CLOTHING_SLUGS = (PRODUCTS ?? [])
-  .filter((p) => ["shirt", "trouser", "outer", "knit"].includes(p.category))
+  .filter((p) => ["shirt", "trouser", "outer", "knit", "set"].includes(p.category))
   .map((p) => p.slug);
 
 export const DEFAULT_COLLECTIONS: CollectionSet[] = [
   {
     slug: "forme",
     numeral: "I",
-    name: "Forme",
-    tagline: "Now showing — SS / 26",
+    name: "FORMME",
+    tagline: "New release — FORMME I",
     status: "showing",
     cover: PRODUCTS[0]?.images?.[0],
-    paletteHex: ["#EFEAE0", "#0B0B0D", "#3A3D44", "#8B6F4E"],
+    paletteHex: ["#173FAE", "#D9A51A", "#111111", "#F5F5F3", "#741C2B"],
     defaultEditorial: {
       intro:
-        "Forme is the opening statement of the house — a study in everyday silhouettes engineered to outlast the season. Each piece is drawn for the body in motion: articulated, dropped, weighted to fall the same way at six in the morning and ten at night.",
+        "FORMME I is the opening statement of the house: a complete intelligent-casualwear system built around a generous outer shirt, inner layer and relaxed cuffed trouser.",
       materials:
-        "Long-staple Egyptian poplin (120 gsm), Italian wool–linen (240 gsm), Japanese cotton-canvas (380 gsm), 16-gauge Australian merino. Each fabric chosen to soften with use, age with grace, and refuse to announce itself.",
+        "Breathable cotton–lyocell twill selected for a cool hand, fluid structure and dependable everyday wear.",
       construction:
-        "Cut and sewn across Porto, Biella, Kyoto, and Bergamo. Mother-of-pearl closures, rolled hems, set-in shoulders. Restraint over novelty — collections are released only when material sourcing, fit, and construction are fully resolved.",
-      dates: "Showing May 2026 — August 2026",
+        "An oversized jacket-fit outer shirt, matte clip buttons, integrated round cuffs, a concealed side-seam zip pocket and relaxed ankle-finished trousers. Designed by KORE and made to order.",
+      dates: "Released August 2026",
     },
     variants: [
       {
         slug: "forme-i",
         numeral: "I",
-        name: "Forme I",
+        name: "FORMME I",
         status: "showing",
         cover: PRODUCTS[0]?.images?.[0],
         story:
-          "The first chapter of Forme. A complete daily wardrobe — shirt, trouser, outer, knit — released as one resolved set.",
-        materials: "Egyptian poplin, Italian wool–linen, Japanese cotton-canvas, Australian merino.",
+          "The first KORE collection, released as one resolved full set. The outer shirt is deliberately spacious and usually worn open over the inner layer.",
+        materials: "Breathable cotton–lyocell twill.",
         dates: "Showing May 2026 — August 2026",
         pieceSlugs: FORME_CLOTHING_SLUGS,
       },
@@ -147,7 +147,7 @@ export const findVariant = (collectionSlug: string, variantSlug: string, list: C
   return c?.variants.find((v) => v.slug === variantSlug) ?? null;
 };
 
-const CLOTHING: Product["category"][] = ["shirt", "trouser", "outer", "knit"];
+const CLOTHING: Product["category"][] = ["shirt", "trouser", "outer", "knit", "set"];
 
 // Pieces for a variant — looks up products by slug. Falls back (FORME only)
 // to all clothing pieces if the variant has no explicit pieceSlugs.
@@ -164,7 +164,7 @@ export const piecesForVariant = (collectionSlug: string, variantSlug: string, li
 
 // Legacy helper kept for compatibility.
 export const piecesFor = (slug: string): Product[] => {
-  if (slug === "forme") return PRODUCTS.filter((p) => CLOTHING.includes(p.category));
+  if (slug === "forme") return PRODUCTS.filter((p) => CLOTHING.includes(p.category) || p.category === "set");
   return [];
 };
 

@@ -3,17 +3,23 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { SiteShell } from "@/components/chrome/site-shell";
 import { findProduct, formatPrice } from "@/lib/products";
+import { getPublicCatalogueProduct } from "@/lib/catalog.functions";
 import { findCollection } from "@/lib/collections";
 import { useCart, cart } from "@/lib/cart-store";
 import { useSaved, saved } from "@/lib/saved-store";
 import { FadeUp, Stagger, StaggerChild } from "@/lib/animation";
 
 export const Route = createFileRoute("/product/$slug")({
-  loader: ({ params }) => {
-    const product = findProduct(params.slug);
+  loader: async ({ params }) => {
+    let product = findProduct(params.slug) ?? null;
+    try {
+      const remote = await getPublicCatalogueProduct({ data: { slug: params.slug } });
+      if (remote.product) product = remote.product;
+    } catch { /* static catalogue remains available */ }
     if (!product) throw notFound();
     const col = findCollection(product.collection);
-    const variant = col?.variants.find((v) => v.pieceSlugs.includes(params.slug)) ?? null;
+    const variant =
+      col?.variants.find((v) => v.slug === product?.variant || v.pieceSlugs.includes(params.slug)) ?? null;
     return { product, col, variant };
   },
   component: Page,

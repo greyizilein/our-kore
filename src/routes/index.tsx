@@ -30,10 +30,9 @@ const SUBSCRIPTION_TIERS = [
   },
 ] as const;
 
-const FORME_PIECES = [
-  { src: "/v-theme/reel1.mp4", name: "Field Overcoat", price: "₦ 285,000" },
-  { src: "/v-theme/reel2.mp4", name: "Atelier Trouser", price: "₦ 142,000" },
-  { src: "/v-theme/reel3.mp4", name: "Considered Knit", price: "₦ 98,000" },
+const FORMME_I_RELEASE = [
+  { src: "/formme-i/blue-set.svg", name: "KORE Blue", position: "Full colour set" },
+  { src: "/formme-i/yellow-set.svg", name: "Signal Yellow", position: "Full colour set" },
 ] as const;
 
 export const Route = createFileRoute("/")({
@@ -47,7 +46,7 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
-  const eyebrow    = usePageText("home", "hero.eyebrow",        "SS / 26 — The Forme");
+  const eyebrow    = usePageText("home", "hero.eyebrow",        "NEW RELEASE — FORMME I");
   const heroL1     = usePageText("home", "hero.title.1",        "Intelligent");
   const heroL2     = usePageText("home", "hero.title.2",        "casualwear.");
   const subhead    = usePageText("home", "hero.subhead",        "Intelligent wardrobe systems: engineered for the people who already know what they want, and for the ones learning to.");
@@ -163,49 +162,53 @@ function Index() {
         </Stagger>
       </div>
 
-      {/* FEATURED REELS */}
-      <section className="mx-auto max-w-[1600px] px-6 lg:px-10 py-16">
-        <FadeUp className="flex justify-between items-end mb-10">
+      {/* FORMME I — NEW RELEASE */}
+      <section className="mx-auto max-w-[1600px] px-3 sm:px-6 lg:px-10 py-16 sm:py-24">
+        <FadeUp className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-5 mb-10">
           <div>
-            <div className="eyebrow text-muted-foreground">Now showing</div>
-            <h2 className="mt-3 text-5xl font-display">The Forme</h2>
+            <div className="inline-flex items-center gap-2 bg-accent text-accent-foreground px-3 py-1.5 text-[10px] tracking-[0.24em] uppercase">
+              <span className="h-1.5 w-1.5 rounded-full bg-current animate-pulse" />
+              New Release
+            </div>
+            <h2 className="mt-5 text-5xl sm:text-6xl lg:text-7xl font-display font-light">FORMME <em>I</em></h2>
+            <p className="mt-3 text-sm text-muted-foreground max-w-xl">
+              The complete outer shirt, inner layer and relaxed cuffed trouser system. Available as a full set.
+            </p>
           </div>
-          <Link to="/collection" className="eyebrow text-accent hover:underline">
-            View all →
-          </Link>
+          <div className="sm:text-right">
+            <p className="font-display text-2xl">₦350,000</p>
+            <Link
+              to="/product/$slug"
+              params={{ slug: "formme-i-full-set" }}
+              className="inline-block mt-3 text-[10px] tracking-[0.22em] uppercase text-accent border-b border-accent/40 hover:border-accent"
+            >
+              View the release →
+            </Link>
+          </div>
         </FadeUp>
 
-        {/* Mobile: continuously flowing filmstrip, no interaction needed */}
-        <div className="sm:hidden -mx-6 overflow-hidden">
-          <div className="flex w-max gap-5 animate-[scroll_38s_linear_infinite]">
-            {[...FORME_PIECES, ...FORME_PIECES].map((p, i) => (
-              <Link key={`${p.name}-${i}`} to="/collection" className="group block shrink-0 w-[72vw]">
-                <div className="aspect-[3/4] bg-muted relative overflow-hidden">
-                  <LazyVideo src={p.src} className="absolute inset-0 h-full w-full" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-transparent" />
+        <Stagger className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-6">
+          {FORMME_I_RELEASE.map((look) => (
+            <StaggerChild key={look.name}>
+              <Link to="/product/$slug" params={{ slug: "formme-i-full-set" }} className="group block">
+                <div className="relative aspect-[9/16] sm:aspect-[3/4] overflow-hidden bg-[#f6f3f0]">
+                  <img
+                    src={look.src}
+                    alt={`FORMME I in ${look.name}`}
+                    loading="lazy"
+                    decoding="async"
+                    className="absolute inset-0 h-full w-full object-cover object-top transition-transform duration-[1200ms] group-hover:scale-[1.025]"
+                  />
+                  <span className="absolute top-4 left-4 bg-background/90 backdrop-blur px-3 py-1.5 text-[9px] tracking-[0.2em] uppercase">
+                    New Release
+                  </span>
                 </div>
-                <div className="mt-4 flex justify-between items-baseline">
-                  <div className="font-display text-xl">{p.name}</div>
-                  <div className="text-sm text-muted-foreground">{p.price}</div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-
-        {/* Tablet/desktop: static reveal grid */}
-        <Stagger className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {FORME_PIECES.map((p) => (
-            <StaggerChild key={p.name}>
-              <Link to="/collection" className="group block">
-                <div className="aspect-[3/4] bg-muted relative overflow-hidden">
-                  <LazyVideo src={p.src} className="absolute inset-0 h-full w-full transition-transform duration-700 group-hover:scale-[1.07]" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-transparent" />
-                  <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/5 transition-colors duration-500" />
-                </div>
-                <div className="mt-4 flex justify-between items-baseline">
-                  <div className="font-display text-xl">{p.name}</div>
-                  <div className="text-sm text-muted-foreground">{p.price}</div>
+                <div className="pt-4 flex items-baseline justify-between gap-4">
+                  <div>
+                    <h3 className="font-display text-xl sm:text-2xl">FORMME I · {look.name}</h3>
+                    <p className="mt-1 text-xs text-muted-foreground">{look.position}</p>
+                  </div>
+                  <p className="text-sm whitespace-nowrap">₦350,000</p>
                 </div>
               </Link>
             </StaggerChild>
