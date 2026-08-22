@@ -6,7 +6,8 @@ import {
   DEFAULT_COLLECTIONS, mergeCollections, findCollection, findVariant, piecesForVariant,
   type CollectionSet,
 } from "@/lib/collections";
-import { formatPrice } from "@/lib/products";
+import { formatPrice, type Product } from "@/lib/products";
+import { getPublicCatalogueProducts } from "@/lib/catalog.functions";
 import { getSiteContent } from "@/lib/cms.functions";
 import { FadeUp, Stagger, StaggerChild } from "@/lib/animation";
 
@@ -52,7 +53,9 @@ export const Route = createFileRoute("/collection/$slug/$variant")({
 function VariantPage() {
   const { slug, variant } = Route.useParams();
   const fetchContent = useServerFn(getSiteContent);
+  const fetchProducts = useServerFn(getPublicCatalogueProducts);
   const [collections, setCollections] = useState<CollectionSet[]>(DEFAULT_COLLECTIONS);
+  const [catalogue, setCatalogue] = useState<Product[] | null>(null);
 
   useEffect(() => {
     fetchContent({ data: { keys: ["collections.list"] } })
@@ -63,9 +66,16 @@ function VariantPage() {
       .catch(() => {});
   }, [fetchContent]);
 
+  useEffect(() => {
+    fetchProducts({ data: { collection: slug, variant } })
+      .then((result) => setCatalogue(result.products))
+      .catch(() => setCatalogue([]));
+  }, [fetchProducts, slug, variant]);
+
   const c = findCollection(slug, collections) ?? findCollection(slug)!;
   const v = findVariant(slug, variant, collections) ?? findVariant(slug, variant)!;
-  const pieces = piecesForVariant(slug, variant, collections);
+  const savedPieces = piecesForVariant(slug, variant, collections);
+  const pieces = catalogue && catalogue.length > 0 ? catalogue : savedPieces;
 
   return (
     <SiteShell>
