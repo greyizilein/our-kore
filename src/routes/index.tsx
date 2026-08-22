@@ -193,33 +193,59 @@ function Index() {
           </div>
         </FadeUp>
 
-        <Stagger className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-6">
-          {FORMME_I_RELEASE.map((look) => (
-            <StaggerChild key={look.name}>
-              <Link to="/product/$slug" params={{ slug: "formme-i-full-set" }} className="group block">
-                <div className="relative aspect-[9/16] sm:aspect-[3/4] overflow-hidden bg-[#f6f3f0]">
-                  <img
-                    src={look.src}
-                    alt={`FORMME I in ${look.name}`}
-                    loading="lazy"
-                    decoding="async"
-                    className="absolute inset-0 h-full w-full object-contain object-top transition-opacity duration-700"
-                  />
-                  <span className="absolute top-4 left-4 bg-background/90 backdrop-blur px-3 py-1.5 text-[9px] tracking-[0.2em] uppercase">
-                    New Release
-                  </span>
-                </div>
-                <div className="pt-4 flex items-baseline justify-between gap-4">
-                  <div>
-                    <h3 className="font-display text-xl sm:text-2xl">FORMME I · {look.name}</h3>
-                    <p className="mt-1 text-xs text-muted-foreground">{look.position}</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-6">
+          {FORMME_I_RELEASE.map((look, index) => (
+            <motion.article
+              key={look.name}
+              initial={{ opacity: 0, y: 44, filter: "blur(8px)" }}
+              whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+              whileHover={{ y: -6 }}
+              viewport={{ once: true, amount: 0.2 }}
+              transition={{ duration: 0.9, delay: index * 0.16, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <motion.div
+                animate={{ y: [0, index === 0 ? -5 : 5, 0] }}
+                transition={{ duration: 8 + index, repeat: Infinity, ease: "easeInOut" }}
+              >
+                <Link to="/product/$slug" params={{ slug: "formme-i-full-set" }} className="group block">
+                  <div className="relative aspect-[9/16] sm:aspect-[3/4] overflow-hidden bg-[#f6f3f0]">
+                    <img
+                      src={look.src}
+                      alt={`FORMME I in ${look.name}`}
+                      loading="lazy"
+                      decoding="async"
+                      className="absolute inset-0 h-full w-full object-contain object-top"
+                    />
+                    <motion.div
+                      aria-hidden
+                      className="absolute inset-0 bg-[linear-gradient(115deg,transparent_35%,rgba(255,255,255,0.2)_50%,transparent_65%)]"
+                      animate={{ x: ["-120%", "120%"] }}
+                      transition={{ duration: 5, delay: index * 1.2, repeat: Infinity, repeatDelay: 4, ease: "easeInOut" }}
+                    />
+                    <span className="absolute top-4 left-4 bg-background/90 backdrop-blur px-3 py-1.5 text-[9px] tracking-[0.2em] uppercase">
+                      New Release
+                    </span>
+                    <motion.span
+                      aria-hidden
+                      className="absolute bottom-0 inset-x-0 h-[2px] bg-accent origin-left"
+                      initial={{ scaleX: 0 }}
+                      whileInView={{ scaleX: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 1.1, delay: 0.35 + index * 0.16 }}
+                    />
                   </div>
-                  <p className="text-sm whitespace-nowrap">₦350,000</p>
-                </div>
-              </Link>
-            </StaggerChild>
+                  <div className="pt-4 flex items-baseline justify-between gap-4">
+                    <div>
+                      <h3 className="font-display text-xl sm:text-2xl">FORMME I · {look.name}</h3>
+                      <p className="mt-1 text-xs text-muted-foreground">{look.position}</p>
+                    </div>
+                    <p className="text-sm whitespace-nowrap">₦350,000</p>
+                  </div>
+                </Link>
+              </motion.div>
+            </motion.article>
           ))}
-        </Stagger>
+        </div>
       </section>
 
       {/* KORE FILMS — retained as part of the house story */}
