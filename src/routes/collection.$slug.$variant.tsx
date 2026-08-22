@@ -1,5 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import { useServerFn } from "@tanstack/react-start";
 import { SiteShell } from "@/components/chrome/site-shell";
 import {
@@ -139,40 +140,56 @@ function VariantPage() {
           </FadeUp>
         ) : (
           <Stagger className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-5 sm:gap-x-6 gap-y-12 sm:gap-y-16">
-            {pieces.map((p) => (
+            {pieces.map((p, index) => (
               <StaggerChild key={p.slug}>
-                <Link to="/product/$slug" params={{ slug: p.slug }} className="group block">
-                  <div className="relative aspect-[9/16] sm:aspect-[3/4] overflow-hidden bg-[#f6f3f0]">
-                    <img
-                      src={p.images[0]}
-                      alt={p.name}
-                      loading="lazy"
-                      decoding="async"
-                      className="absolute inset-0 h-full w-full object-contain object-top transition-opacity duration-700"
-                    />
-                    {p.images[1] && (
+                <motion.article
+                  initial={{ opacity: 0, y: 36, filter: "blur(6px)" }}
+                  whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                  whileHover={{ y: -5 }}
+                  viewport={{ once: true, amount: 0.15 }}
+                  transition={{ duration: 0.8, delay: index * 0.1, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  <Link to="/product/$slug" params={{ slug: p.slug }} className="group block">
+                    <div className="relative aspect-[9/16] sm:aspect-[3/4] overflow-hidden bg-[#f6f3f0]">
                       <img
-                        src={p.images[1]}
-                        alt=""
-                        aria-hidden
+                        src={p.images[0]}
+                        alt={p.name}
                         loading="lazy"
                         decoding="async"
-                        className="absolute inset-0 h-full w-full object-contain object-top opacity-0 transition-opacity duration-700 group-hover:opacity-100"
+                        className="absolute inset-0 h-full w-full object-contain object-top transition-opacity duration-700"
                       />
-                    )}
-                    <span className="absolute top-4 left-4 font-display text-xs text-background/80 mix-blend-difference">
-                      N° {p.number}
-                    </span>
-                    <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/5 transition-colors duration-500" />
-                  </div>
-                  <div className="pt-4 sm:pt-5 flex items-baseline justify-between gap-4">
-                    <div className="min-w-0">
-                      <h3 className="font-display text-base sm:text-lg leading-tight truncate">{p.name}</h3>
-                      <p className="text-xs text-muted-foreground mt-1 truncate">{p.fabric.split(",")[0]}</p>
+                      {p.images[1] && (
+                        <img
+                          src={p.images[1]}
+                          alt=""
+                          aria-hidden
+                          loading="lazy"
+                          decoding="async"
+                          className="absolute inset-0 h-full w-full object-contain object-top opacity-0 transition-opacity duration-700 group-hover:opacity-100"
+                        />
+                      )}
+                      <motion.div
+                        aria-hidden
+                        className="absolute inset-0 bg-[linear-gradient(115deg,transparent_38%,rgba(255,255,255,0.16)_50%,transparent_62%)]"
+                        initial={{ x: "-120%" }}
+                        whileInView={{ x: "120%" }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 1.4, delay: 0.35 + index * 0.12, ease: "easeInOut" }}
+                      />
+                      <span className="absolute top-4 left-4 font-display text-xs text-background/80 mix-blend-difference">
+                        N° {p.number}
+                      </span>
+                      <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/5 transition-colors duration-500" />
                     </div>
-                    <p className="text-sm tabular-nums whitespace-nowrap">{formatPrice(p.price, p.currency)}</p>
-                  </div>
-                </Link>
+                    <div className="pt-4 sm:pt-5 flex items-baseline justify-between gap-4">
+                      <div className="min-w-0">
+                        <h3 className="font-display text-base sm:text-lg leading-tight truncate">{p.name}</h3>
+                        <p className="text-xs text-muted-foreground mt-1 truncate">{p.fabric.split(",")[0]}</p>
+                      </div>
+                      <p className="text-sm tabular-nums whitespace-nowrap">{formatPrice(p.price, p.currency)}</p>
+                    </div>
+                  </Link>
+                </motion.article>
               </StaggerChild>
             ))}
           </Stagger>
