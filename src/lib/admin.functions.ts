@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
 import { supabaseAdmin } from "@/integrations/kore-supabase/admin.server";
 import { KORE_SUPABASE_URL, KORE_SUPABASE_ANON_KEY } from "@/integrations/kore-supabase/client";
+import { FORMME_I_PRODUCT } from "@/lib/products";
 
 // --- Admin gate -----------------------------------------------------------
 async function getAuthedUser(token: string) {
@@ -99,34 +100,189 @@ export const adminListMembers = createServerFn({ method: "POST" })
     };
   });
 
+type AdminProductInput = {
+  id?: string;
+  slug: string;
+  series: string;
+  name: string;
+  number: string;
+  collection_slug: string;
+  variant_slug: string;
+  category: string;
+  price_ngn: number;
+  currency: string;
+  status: string;
+  sort_order: number;
+  description?: string;
+  material?: string;
+  origin?: string;
+  sizes?: string[];
+  colorways?: Array<{ name: string; hex: string }>;
+  images?: string[];
+  hero?: string;
+  featured?: boolean;
+  is_new?: boolean;
+};
+
+const formmeIAdminSeed: AdminProductInput = {
+  slug: FORMME_I_PRODUCT.slug,
+  series: "FORMME I",
+  name: FORMME_I_PRODUCT.name,
+  number: FORMME_I_PRODUCT.number,
+  collection_slug: FORMME_I_PRODUCT.collection,
+  variant_slug: FORMME_I_PRODUCT.variant || "forme-i",
+  category: FORMME_I_PRODUCT.category,
+  price_ngn: FORMME_I_PRODUCT.price / 100,
+  currency: FORMME_I_PRODUCT.currency,
+  status: "live",
+  sort_order: 1,
+  description: FORMME_I_PRODUCT.story,
+  material: FORMME_I_PRODUCT.fabric,
+  origin: FORMME_I_PRODUCT.origin,
+  sizes: FORMME_I_PRODUCT.sizes,
+  colorways: FORMME_I_PRODUCT.colorways,
+  images: FORMME_I_PRODUCT.images,
+  hero: FORMME_I_PRODUCT.hero,
+  featured: true,
+  is_new: true,
+};
+
+async function readExtendedCatalogue(): Promise<AdminProductInput[]> {
+  const { data } = await supabaseAdmin
+    .from("site_content")
+    .select("value")
+    .eq("key", "catalog.products")
+    .maybeSingle();
+  return Array.isArray(data?.value) ? data.value : [];
+}
+
 export const adminListProducts = createServerFn({ method: "POST" })
   .inputValidator((d: { token: string }) => d)
   .handler(async ({ data }) => {
     await requireAdmin(data.token);
-    const { data: rows, error } = await supabaseAdmin
-      .from("products").select("*").order("sort_order", { ascending: true });
+    const [{ data: rows, error }, extended] = await Promise.all([
+      supabaseAdmin.from("products").select("*").order("sort_order", { ascending: true }),
+      readExtendedCatalogue(),
+    ]);
     if (error) throw new Error(error.message);
-    return { products: rows ?? [] };
+
+    const extendedById = new Map(extended.filter((p) => p.id).map((p) => [p.id, p]));
+    const merged = (rows ?? []).map((row: any) => ({ ...row, ...(extendedById.get(row.id) ?? {}) }));
+    for (const product of extended) {
+      if (!product.id || !merged.some((row: any) => row.id === product.id)) merged.push(product);
+    }
+    if (!merged.some((row: any) => row.slug === FORMME_I_PRODUCT.slug)) merged.push(formmeIAdminSeed);
+
+    merged.sort((a: any, b: any) => Number(a.sort_order || 0) - Number(b.sort_order || 0));
+    return { products: merged };
   });
 
 export const adminUpsertProduct = createServerFn({ method: "POST" })
-  .inputValidator((d: { token: string; product: { id?: string; series: string; name: string; price_ngn: number; status: string; sort_order: number; description?: string; material?: string } }) => d)
+  .inputValidator((d: { token: string; product: AdminProductInput }) => d)
   .handler(async ({ data }) => {
     await requireAdmin(data.token);
-    const payload: any = { ...data.product, updated_at: new Date().toISOString() };
-    if (!payload.id) delete payload.id;
-    const { error } = await supabaseAdmin.from("products").upsert(payload);
+    const input = data.product;
+    if (!input.slug || !input.name) throw new Error("Product name and slug are required.");
+
+    const basic: any = {
+      series: input.series || "",
+      name: input.name,
+      price_ngn: Number(input.price_ngn || 0),
+      status: input.status || "draft",
+      sort_order: Number(input.sort_order || 0),
+      description: input.description || "",
+      material: input.material || "",
+      updated_at: new Date().toISOString(),
+    };
+    if (input.id && /^[0-9a-f-]{36}$/i.test(input.id)) basic.id = input.id;
+
+    const { data: saved, error } = await supabaseAdmin
+      .from("products")
+      .upsert(basic)
+      .select("id")
+      .single();
     if (error) throw new Error(error.message);
-    return { ok: true };
+
+    const record: AdminProductInput = {
+      ...input,
+      id: saved.id,
+      price_ngn: Number(input.price_ngn || 0),
+      sort_order: Number(input.sort_order || 0),
+      images: Array.isArray(input.images) ? input.images.filter(Boolean) : [],
+      sizes: Array.isArray(input.sizes) ? input.sizes.filter(Boolean) : [],
+      colorways: Array.isArray(input.colorways) ? input.colorways.filter((c) => c?.name) : [],
+    };
+    const catalogue = await readExtendedCatalogue();
+    const next = catalogue.filter((item) => item.id !== saved.id && item.slug !== record.slug);
+    next.push(record);
+    next.sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0));
+
+    const { error: contentError } = await supabaseAdmin.from("site_content").upsert(
+      { key: "catalog.products", value: next, updated_at: new Date().toISOString() },
+      { onConflict: "key" },
+    );
+    if (contentError) throw new Error(contentError.message);
+    return { ok: true, product: record };
   });
 
 export const adminDeleteProduct = createServerFn({ method: "POST" })
-  .inputValidator((d: { token: string; id: string }) => d)
+  .inputValidator((d: { token: string; id: string; slug?: string }) => d)
   .handler(async ({ data }) => {
     await requireAdmin(data.token);
-    const { error } = await supabaseAdmin.from("products").delete().eq("id", data.id);
-    if (error) throw new Error(error.message);
+    if (/^[0-9a-f-]{36}$/i.test(data.id)) {
+      const { error } = await supabaseAdmin.from("products").delete().eq("id", data.id);
+      if (error) throw new Error(error.message);
+    }
+    const catalogue = await readExtendedCatalogue();
+    const next = catalogue.filter((item) => item.id !== data.id && (!data.slug || item.slug !== data.slug));
+    const { error: contentError } = await supabaseAdmin.from("site_content").upsert(
+      { key: "catalog.products", value: next, updated_at: new Date().toISOString() },
+      { onConflict: "key" },
+    );
+    if (contentError) throw new Error(contentError.message);
     return { ok: true };
+  });
+
+export const adminUploadProductImage = createServerFn({ method: "POST" })
+  .inputValidator((d: {
+    token: string;
+    product_slug: string;
+    filename: string;
+    data_base64: string;
+    content_type: string;
+  }) => d)
+  .handler(async ({ data }) => {
+    await requireAdmin(data.token);
+    const allowed: Record<string, string> = {
+      "image/jpeg": "jpg",
+      "image/png": "png",
+      "image/webp": "webp",
+      "image/avif": "avif",
+    };
+    const ext = allowed[data.content_type];
+    if (!ext) throw new Error("Use a JPG, PNG, WebP or AVIF image.");
+    const buf = Buffer.from(data.data_base64, "base64");
+    if (buf.byteLength > 5 * 1024 * 1024) throw new Error("Each image must be 5 MB or smaller.");
+
+    try {
+      await supabaseAdmin.storage.createBucket("product-images", {
+        public: true,
+        fileSizeLimit: 5 * 1024 * 1024,
+        allowedMimeTypes: Object.keys(allowed),
+      });
+    } catch { /* bucket already exists */ }
+
+    const slug = (data.product_slug || "unassigned").toLowerCase().replace(/[^a-z0-9-]/g, "-");
+    const unique = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const path = `${slug}/${unique}.${ext}`;
+    const { error } = await supabaseAdmin.storage.from("product-images").upload(path, buf, {
+      contentType: data.content_type,
+      cacheControl: "31536000",
+      upsert: false,
+    });
+    if (error) throw new Error(error.message);
+    const { data: publicData } = supabaseAdmin.storage.from("product-images").getPublicUrl(path);
+    return { url: publicData.publicUrl };
   });
 
 export const adminExportAll = createServerFn({ method: "POST" })
