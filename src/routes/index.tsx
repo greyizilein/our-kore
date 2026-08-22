@@ -35,6 +35,12 @@ const FORMME_I_RELEASE = [
   { src: "/formme-i/yellow-set.svg", name: "Signal Yellow", position: "Full colour set" },
 ] as const;
 
+const KORE_FILMS = [
+  { src: "/v-theme/reel1.mp4", name: "Field Overcoat" },
+  { src: "/v-theme/reel2.mp4", name: "Atelier Trouser" },
+  { src: "/v-theme/reel3.mp4", name: "Considered Knit" },
+] as const;
+
 export const Route = createFileRoute("/")({
   component: Index,
   head: () => ({
@@ -197,7 +203,7 @@ function Index() {
                     alt={`FORMME I in ${look.name}`}
                     loading="lazy"
                     decoding="async"
-                    className="absolute inset-0 h-full w-full object-cover object-top transition-transform duration-[1200ms] group-hover:scale-[1.025]"
+                    className="absolute inset-0 h-full w-full object-contain object-top transition-opacity duration-700"
                   />
                   <span className="absolute top-4 left-4 bg-background/90 backdrop-blur px-3 py-1.5 text-[9px] tracking-[0.2em] uppercase">
                     New Release
@@ -210,6 +216,49 @@ function Index() {
                   </div>
                   <p className="text-sm whitespace-nowrap">₦350,000</p>
                 </div>
+              </Link>
+            </StaggerChild>
+          ))}
+        </Stagger>
+      </section>
+
+      {/* KORE FILMS — retained as part of the house story */}
+      <section className="mx-auto max-w-[1600px] px-6 lg:px-10 py-16 sm:py-24 border-t border-border/40">
+        <FadeUp className="flex justify-between items-end gap-5 mb-10">
+          <div>
+            <div className="eyebrow text-muted-foreground">In motion</div>
+            <h2 className="mt-3 text-4xl sm:text-5xl font-display">The KORE <em>films</em></h2>
+          </div>
+          <Link to="/collection" className="eyebrow text-accent hover:underline">
+            Enter the collection →
+          </Link>
+        </FadeUp>
+
+        {/* Mobile filmstrip */}
+        <div className="sm:hidden -mx-6 overflow-hidden">
+          <div className="flex w-max gap-5 animate-[scroll_38s_linear_infinite]">
+            {[...KORE_FILMS, ...KORE_FILMS].map((film, index) => (
+              <Link key={`${film.name}-${index}`} to="/collection" className="group block shrink-0 w-[72vw]">
+                <div className="aspect-[3/4] bg-muted relative overflow-hidden">
+                  <LazyVideo src={film.src} className="absolute inset-0 h-full w-full" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-background/55 via-transparent to-transparent" />
+                </div>
+                <h3 className="mt-4 font-display text-xl">{film.name}</h3>
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        {/* Tablet and desktop film grid */}
+        <Stagger className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {KORE_FILMS.map((film) => (
+            <StaggerChild key={film.name}>
+              <Link to="/collection" className="group block">
+                <div className="aspect-[3/4] bg-muted relative overflow-hidden">
+                  <LazyVideo src={film.src} className="absolute inset-0 h-full w-full transition-transform duration-700 group-hover:scale-[1.04]" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-background/55 via-transparent to-transparent" />
+                </div>
+                <h3 className="mt-4 font-display text-xl">{film.name}</h3>
               </Link>
             </StaggerChild>
           ))}

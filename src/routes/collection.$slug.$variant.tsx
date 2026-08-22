@@ -142,13 +142,13 @@ function VariantPage() {
             {pieces.map((p) => (
               <StaggerChild key={p.slug}>
                 <Link to="/product/$slug" params={{ slug: p.slug }} className="group block">
-                  <div className="relative aspect-[3/4] overflow-hidden bg-muted/30">
+                  <div className="relative aspect-[9/16] sm:aspect-[3/4] overflow-hidden bg-[#f6f3f0]">
                     <img
                       src={p.images[0]}
                       alt={p.name}
                       loading="lazy"
                       decoding="async"
-                      className="absolute inset-0 h-full w-full object-cover transition-transform duration-[1200ms] group-hover:scale-[1.06]"
+                      className="absolute inset-0 h-full w-full object-contain object-top transition-opacity duration-700"
                     />
                     {p.images[1] && (
                       <img
@@ -157,7 +157,7 @@ function VariantPage() {
                         aria-hidden
                         loading="lazy"
                         decoding="async"
-                        className="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-700 group-hover:opacity-100"
+                        className="absolute inset-0 h-full w-full object-contain object-top opacity-0 transition-opacity duration-700 group-hover:opacity-100"
                       />
                     )}
                     <span className="absolute top-4 left-4 font-display text-xs text-background/80 mix-blend-difference">
