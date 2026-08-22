@@ -147,7 +147,7 @@ export const findVariant = (collectionSlug: string, variantSlug: string, list: C
   return c?.variants.find((v) => v.slug === variantSlug) ?? null;
 };
 
-const CLOTHING: Product["category"][] = ["shirt", "trouser", "outer", "knit"];
+const CLOTHING: Product["category"][] = ["shirt", "trouser", "outer", "knit", "set"];
 
 // Pieces for a variant — looks up products by slug. Falls back (FORME only)
 // to all clothing pieces if the variant has no explicit pieceSlugs.
