@@ -396,10 +396,13 @@ function Products({ token, flash }: { token: string; flash: (m: string) => void 
   const uploadFiles = async (files: FileList | File[]) => {
     const selected = Array.from(files);
     if (!selected.length) return;
+    const oversized = selected.find((file) => file.size > 5 * 1024 * 1024);
+    if (oversized) { flash(`${oversized.name} is larger than 5 MB.`); return; }
     setUploading(true);
     try {
-      for (const file of selected) {
-        if (file.size > 5 * 1024 * 1024) throw new Error(`${file.name} is larger than 5 MB.`);
+      // Uploads run concurrently, but Promise.all preserves selection order
+      // in the result array regardless of which request finishes first.
+      const urls = await Promise.all(selected.map(async (file) => {
         const bytes = new Uint8Array(await file.arrayBuffer());
         let binary = "";
         for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
@@ -412,8 +415,9 @@ function Products({ token, flash }: { token: string; flash: (m: string) => void 
             content_type: file.type,
           },
         });
-        setEditing((current: any) => ({ ...current, images: [...(current?.images || []), url] }));
-      }
+        return url;
+      }));
+      setEditing((current: any) => ({ ...current, images: [...(current?.images || []), ...urls] }));
       flash(`${selected.length} image${selected.length === 1 ? "" : "s"} uploaded.`);
     } catch (e: any) { flash(e.message || "Image upload failed"); }
     finally { setUploading(false); }
