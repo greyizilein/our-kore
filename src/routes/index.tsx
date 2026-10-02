@@ -4,6 +4,8 @@ import { SiteShell } from "@/components/chrome/site-shell";
 import { LazyVideo } from "@/components/chrome/lazy-video";
 import { FadeUp, Stagger, StaggerChild } from "@/lib/animation";
 import { usePageText } from "@/lib/cms/page-content";
+import { FORMME_I_PRODUCT, formatPrice } from "@/lib/products";
+import { getPublicCatalogueProduct } from "@/lib/catalog.functions";
 
 const SUBSCRIPTION_TIERS = [
   {
@@ -43,6 +45,18 @@ const KORE_FILMS = [
 
 export const Route = createFileRoute("/")({
   component: Index,
+  loader: async () => {
+    let formmeIPrice = FORMME_I_PRODUCT.price;
+    let formmeICurrency = FORMME_I_PRODUCT.currency as string;
+    try {
+      const remote = await getPublicCatalogueProduct({ data: { slug: FORMME_I_PRODUCT.slug } });
+      if (remote.product) {
+        formmeIPrice = remote.product.price;
+        formmeICurrency = remote.product.currency;
+      }
+    } catch { /* static seed price remains available */ }
+    return { formmeIPrice, formmeICurrency };
+  },
   head: () => ({
     meta: [
       { title: "KORE — Intelligent Casualwear" },
@@ -52,6 +66,7 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
+  const { formmeIPrice, formmeICurrency } = Route.useLoaderData();
   const eyebrow    = usePageText("home", "hero.eyebrow",        "NEW RELEASE — FORMME I");
   const heroL1     = usePageText("home", "hero.title.1",        "Intelligent");
   const heroL2     = usePageText("home", "hero.title.2",        "casualwear.");
@@ -182,7 +197,7 @@ function Index() {
             </p>
           </div>
           <div className="sm:text-right">
-            <p className="font-display text-2xl">₦350,000</p>
+            <p className="font-display text-2xl">{formatPrice(formmeIPrice, formmeICurrency)}</p>
             <Link
               to="/product/$slug"
               params={{ slug: "formme-i-full-set" }}
@@ -239,7 +254,7 @@ function Index() {
                       <h3 className="font-display text-xl sm:text-2xl">FORMME I · {look.name}</h3>
                       <p className="mt-1 text-xs text-muted-foreground">{look.position}</p>
                     </div>
-                    <p className="text-sm whitespace-nowrap">₦350,000</p>
+                    <p className="text-sm whitespace-nowrap">{formatPrice(formmeIPrice, formmeICurrency)}</p>
                   </div>
                 </Link>
               </motion.div>

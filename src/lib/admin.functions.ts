@@ -122,6 +122,10 @@ type AdminProductInput = {
   hero?: string;
   featured?: boolean;
   is_new?: boolean;
+  // Tombstone marker: written when a built-in seed product (see
+  // formmeIAdminSeed below) is deleted, so adminListProducts knows not to
+  // re-inject the seed on the next read. Only `slug` + `deleted` are set.
+  deleted?: boolean;
 };
 
 const formmeIAdminSeed: AdminProductInput = {
@@ -166,12 +170,17 @@ export const adminListProducts = createServerFn({ method: "POST" })
     ]);
     if (error) throw new Error(error.message);
 
-    const extendedById = new Map(extended.filter((p) => p.id).map((p) => [p.id, p]));
+    const tombstones = new Set(extended.filter((p) => p.deleted).map((p) => p.slug));
+    const liveExtended = extended.filter((p) => !p.deleted);
+
+    const extendedById = new Map(liveExtended.filter((p) => p.id).map((p) => [p.id, p]));
     const merged = (rows ?? []).map((row: any) => ({ ...row, ...(extendedById.get(row.id) ?? {}) }));
-    for (const product of extended) {
+    for (const product of liveExtended) {
       if (!product.id || !merged.some((row: any) => row.id === product.id)) merged.push(product);
     }
-    if (!merged.some((row: any) => row.slug === FORMME_I_PRODUCT.slug)) merged.push(formmeIAdminSeed);
+    if (!tombstones.has(FORMME_I_PRODUCT.slug) && !merged.some((row: any) => row.slug === FORMME_I_PRODUCT.slug)) {
+      merged.push(formmeIAdminSeed);
+    }
 
     merged.sort((a: any, b: any) => Number(a.sort_order || 0) - Number(b.sort_order || 0));
     return { products: merged };
@@ -235,6 +244,11 @@ export const adminDeleteProduct = createServerFn({ method: "POST" })
     }
     const catalogue = await readExtendedCatalogue();
     const next = catalogue.filter((item) => item.id !== data.id && (!data.slug || item.slug !== data.slug));
+    // Deleting the built-in FORMME I seed needs a tombstone, or the next
+    // adminListProducts read will find no row for its slug and re-inject it.
+    if (data.slug === FORMME_I_PRODUCT.slug) {
+      next.push({ slug: FORMME_I_PRODUCT.slug, deleted: true } as AdminProductInput);
+    }
     const { error: contentError } = await supabaseAdmin.from("site_content").upsert(
       { key: "catalog.products", value: next, updated_at: new Date().toISOString() },
       { onConflict: "key" },
